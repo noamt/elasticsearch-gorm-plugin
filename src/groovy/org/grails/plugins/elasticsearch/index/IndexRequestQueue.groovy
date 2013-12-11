@@ -16,17 +16,12 @@
 package org.grails.plugins.elasticsearch.index
 
 import org.codehaus.groovy.grails.support.PersistenceContextInterceptor
-
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-
 import org.codehaus.groovy.runtime.InvokerHelper
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.bulk.BulkRequestBuilder
 import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.client.Client
+import org.elasticsearch.common.util.concurrent.jsr166y.ConcurrentLinkedDeque
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.grails.plugins.elasticsearch.ElasticSearchContextHolder
 import org.grails.plugins.elasticsearch.conversion.JSONDomainFactory
@@ -36,6 +31,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.util.Assert
+
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Holds objects to be indexed.
@@ -161,10 +160,10 @@ class IndexRequestQueue implements InitializingBean {
                 XContentBuilder json = toJSON(value)
 
                 def index = elasticSearchClient.prepareIndex()
-                        .setIndex(scm.indexName)
-                        .setType(scm.elasticTypeName)
-                        .setId(key.id) // TODO : Composite key ?
-                        .setSource(json)
+                    .setIndex(scm.indexName)
+                    .setType(scm.elasticTypeName)
+                    .setId(key.id) // TODO : Composite key ?
+                    .setSource(json)
                 if (parentMapping) {
                     index = index.setParent(value."${parentMapping.propertyName}".id)
                 }
@@ -190,10 +189,10 @@ class IndexRequestQueue implements InitializingBean {
                 LOG.debug("Deleting object from index $scm.indexName and type $scm.elasticTypeName and ID $it.id")
             }
             bulkRequestBuilder.add(
-                    elasticSearchClient.prepareDelete()
-                            .setIndex(scm.indexName)
-                            .setType(scm.elasticTypeName)
-                            .setId(it.id)
+                elasticSearchClient.prepareDelete()
+                    .setIndex(scm.indexName)
+                    .setType(scm.elasticTypeName)
+                    .setId(it.id)
             )
         }
 
