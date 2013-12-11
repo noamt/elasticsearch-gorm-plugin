@@ -82,7 +82,7 @@ class ElasticSearchService implements GrailsApplicationAware {
      * @return A Map containing the search results
      */
     def search(String query, Map params = [:]) {
-        SearchRequest request = buildSearchRequest(query, params)
+        SearchRequest request = buildSearchRequest(query, null, params)
         search(request, params)
     }
 
@@ -315,14 +315,12 @@ class ElasticSearchService implements GrailsApplicationAware {
      * @return The SearchRequest instance
      */
     private SearchRequest buildSearchRequest(query, Closure filter, Map params) {
-        SearchRequest request = new SearchRequest()
-        request.searchType SearchType.DFS_QUERY_THEN_FETCH
-
         SearchSourceBuilder source = new SearchSourceBuilder()
 
         source.from(params.from ? params.from as int : 0)
-        source.size(params.size ? params.size as int : 60)
-        source.explain(params.explain ?: true)
+            .size(params.size ? params.size as int : 60)
+            .explain(params.explain ?: true)
+
         if (params.sort) {
             source.sort(params.sort, SortOrder.valueOf(params.order?.toUpperCase() ?: "ASC"))
         }
@@ -346,9 +344,12 @@ class ElasticSearchService implements GrailsApplicationAware {
             highlightBuilder.call()
             source.highlight highlighter
         }
+
+        SearchRequest request = new SearchRequest()
+        request.searchType SearchType.DFS_QUERY_THEN_FETCH
         request.source source
 
-        request
+        return request
     }
 
     SearchSourceBuilder setQueryInSource(SearchSourceBuilder source, String query, Map params = [:]) {

@@ -21,7 +21,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
     def "Index a domain object"() {
         given:
         def product = new Product(name: "myTestProduct")
-        product.save()
+        product.save(failOnError: true)
 
         when:
         elasticSearchService.index(product)
@@ -34,7 +34,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
     def "Unindex method delete index from ES"() {
         given:
         def product = new Product(name: "myTestProduct")
-        product.save()
+        product.save(failOnError: true)
 
         when:
         elasticSearchService.index(product)
@@ -54,7 +54,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
     def "Indexing multiple time the same object update the corresponding ES entry"() {
         given:
         def product = new Product(name: "myTestProduct")
-        product.save()
+        product.save(failOnError: true)
 
         when:
         elasticSearchService.index(product)
@@ -136,10 +136,16 @@ distance: "50km"
 
     void "searching with filtered query"() {
         given: "some products"
-        def product1 = new Product(name: "wurst", price: 2.00)
-        product1.save()
+        def wurstProduct = new Product(name: "wurst", price: 2.00)
+        wurstProduct.save(failOnError: true)
 
-        elasticSearchService.index(product1)
+        def hansProduct = new Product(name: 'hans', price: 0.5)
+        hansProduct.save(failOnError: true)
+
+        def fooProduct = new Product(name: 'foo', price: 5.0)
+        fooProduct.save(failOnError: true)
+
+        elasticSearchService.index(wurstProduct, hansProduct, fooProduct)
         elasticSearchAdminService.refresh()
 
         when: "that a range filter find the product"
@@ -148,9 +154,10 @@ distance: "50km"
                 "price"(gte: 1, lte: 3)
             }
         })
+
         then: "the result should be product1"
         1 == searchResult.searchResults.size()
-        product1.name == searchResult.searchResults[0].name
+        wurstProduct.name == searchResult.searchResults[0].name
 
 
     }
