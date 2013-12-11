@@ -123,8 +123,9 @@ class AuditEventListener extends AbstractPersistenceEventListener {
     }
 
     void onPostInsert(PostInsertEvent event) {
-        def entity = event.entityAccess.entity
-        if (elasticSearchContextHolder.isRootClass(entity.class)) {
+        // FIXME: replace with a version independent of hibernate
+        def entity = event.entityObject
+        if (elasticSearchContextHolder.isRootClass(entity?.class)) {
             pushToIndex(entity)
         }
     }

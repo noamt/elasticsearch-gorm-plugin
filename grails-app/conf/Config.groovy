@@ -1,8 +1,8 @@
 log4j = {
     error 'org.codehaus.groovy.grails',
-          'org.springframework',
-          'org.hibernate',
-          'net.sf.ehcache.hibernate'
+        'org.springframework',
+        'org.hibernate',
+        'net.sf.ehcache.hibernate'
     debug 'org.grails.plugins.elasticsearch'
 }
 
@@ -18,7 +18,7 @@ elasticSearch {
      * If the client mode is set to "transport" and no hosts are defined, ["localhost", 9300] will be used by default.
      */
     client.hosts = [
-            [host: 'localhost', port: 9300]
+        [host: 'localhost', port: 9300]
     ]
 
     disableAutoIndex = false
@@ -45,6 +45,7 @@ environments {
             client.mode = 'local'
             client.transport.sniff = true
             index.store.type = 'memory'
+            datastoreImpl = 'hibernateDatastore'
         }
     }
 
@@ -55,5 +56,5 @@ environments {
 
 grails.doc.authors = 'Noam Y. Tenne, Manuarii Stein, Stephane Maldini, Serge P. Nekoval'
 grails.doc.license = 'Apache License 2.0'
-grails.views.default.codec="none" // none, html, base64
-grails.views.gsp.encoding="UTF-8"
+grails.views.default.codec = "none" // none, html, base64
+grails.views.gsp.encoding = "UTF-8"
