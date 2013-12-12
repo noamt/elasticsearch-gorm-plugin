@@ -189,7 +189,7 @@ class SearchableClassPropertyMapping {
     /**
      * True if property is a variant of geo_point type
      */
-    public boolean isGeoPoint() {
+    boolean isGeoPoint() {
         Object geoPoint = specialMappingAttributes.get("geoPoint")
         return (geoPoint != null && ((Boolean) geoPoint))
     }

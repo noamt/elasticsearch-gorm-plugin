@@ -31,12 +31,15 @@ elasticSearch {
 environments {
     development {
         elasticSearch {
-            /**
-             * Possible values : "local", "node", "transport"
-             */
-            client.mode = 'local'
-            client.transport.sniff = true
-            bulkIndexOnStartup = true
+            cluster {
+                name = 'development'
+            }
+            client {
+                // the plugin create a transport client that will connect to a remote ElasticSearch instance without joining the cluster.
+                mode = 'transport'
+                hosts = [[host: 'localhost', port: 9300]]
+            }
+            datastoreImpl = 'hibernateDatastore'
         }
     }
 
