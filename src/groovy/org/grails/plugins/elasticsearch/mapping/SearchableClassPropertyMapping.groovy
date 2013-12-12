@@ -24,8 +24,8 @@ import org.grails.plugins.elasticsearch.ElasticSearchContextHolder
 class SearchableClassPropertyMapping {
 
     private static final Set<String> SEARCHABLE_MAPPING_OPTIONS = ['boost', 'index', 'analyzer']
-    private static final Set<String> SEARCHABLE_SPECIAL_MAPPING_OPTIONS =
-        ['component', 'converter', 'reference', 'excludeFromAll', 'maxDepth', 'multi_field', 'parent']
+    private static
+    final Set<String> SEARCHABLE_SPECIAL_MAPPING_OPTIONS = ['component', 'converter', 'reference', 'excludeFromAll', 'maxDepth', 'multi_field', 'parent', 'geoPoint']
 
     /** Grails attributes of this property */
     private GrailsDomainClassProperty grailsProperty
@@ -151,7 +151,7 @@ class SearchableClassPropertyMapping {
      */
     String toString() {
         "SearchableClassPropertyMapping{propertyName=${getPropertyName()}, propertyType='${getPropertyType()}, " +
-                "mappingAttributes=$mappingAttributes, specialMappingAttributes=$specialMappingAttributes"
+            "mappingAttributes=$mappingAttributes, specialMappingAttributes=$specialMappingAttributes"
     }
 
     private Class<?> getPropertyType() {
@@ -185,4 +185,13 @@ class SearchableClassPropertyMapping {
         String index = (String) mappingAttributes.index
         (index == null || index == 'analyzed')
     }
+
+    /**
+     * True if property is a variant of geo_point type
+     */
+    public boolean isGeoPoint() {
+        Object geoPoint = specialMappingAttributes.get("geoPoint")
+        return (geoPoint != null && ((Boolean) geoPoint))
+    }
+
 }

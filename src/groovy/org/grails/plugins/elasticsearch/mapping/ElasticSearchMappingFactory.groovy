@@ -16,7 +16,6 @@
 package org.grails.plugins.elasticsearch.mapping
 
 import grails.util.GrailsNameUtils
-
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.commons.GrailsDomainClass
 import org.codehaus.groovy.grails.commons.GrailsDomainClassProperty
@@ -38,7 +37,8 @@ class ElasticSearchMappingFactory {
     static {
         try {
             JODA_TIME_BASE = Class.forName('org.joda.time.ReadableInstant')
-        } catch (ClassNotFoundException e) {}
+        } catch (ClassNotFoundException e) {
+        }
     }
 
     static Map<String, Object> getElasticMapping(SearchableClassMapping scm) {
@@ -68,7 +68,9 @@ class ElasticSearchMappingFactory {
             Map<String, Object> propOptions = [:]
             // Add the custom mapping (searchable static property in domain model)
             propOptions.putAll(scpm.getAttributes())
-            if (!(SUPPORTED_FORMAT.contains(scpm.getGrailsProperty().getTypePropertyName()))) {
+            if (scpm.isGeoPoint()) {
+                propType = "geo_point"
+            } else if (!(SUPPORTED_FORMAT.contains(scpm.getGrailsProperty().getTypePropertyName()))) {
                 // Handle embedded persistent collections, ie List<String> listOfThings
                 if (scpm.getGrailsProperty().isBasicCollectionType()) {
                     String basicType = ClassUtils.getShortName(scpm.getGrailsProperty().getReferencedPropertyType()).toLowerCase(Locale.ENGLISH)

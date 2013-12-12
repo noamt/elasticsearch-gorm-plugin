@@ -16,14 +16,14 @@
 
 package org.grails.plugins.elasticsearch.conversion
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
-
-import java.beans.PropertyEditor
-
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsDomainClass
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.grails.plugins.elasticsearch.conversion.marshall.*
+
+import java.beans.PropertyEditor
+
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
 
 /**
  * Marshall objects as JSON.
@@ -92,7 +92,10 @@ class JSONDomainFactory {
         if (!marshaller) {
             // TODO : support user custom marshaller/converter (& marshaller registration)
             // Check for domain classes
-            if (DomainClassArtefactHandler.isDomainClass(objectClass)) {
+            def propertyMapping = elasticSearchContextHolder.getMappingContext(getDomainClass(marshallingContext.peekDomainObject()))?.getPropertyMapping(marshallingContext.lastParentPropertyName)
+            if (propertyMapping.isGeoPoint()) {
+                marshaller = new GeoPointMarshaller()
+            } else if (DomainClassArtefactHandler.isDomainClass(objectClass)) {
                 /*def domainClassName = objectClass.simpleName.substring(0,1).toLowerCase() + objectClass.simpleName.substring(1)
              SearchableClassPropertyMapping propMap = elasticSearchContextHolder.getMappingContext(domainClassName).getPropertyMapping(marshallingContext.lastParentPropertyName)*/
                 marshaller = new DeepDomainClassMarshaller()

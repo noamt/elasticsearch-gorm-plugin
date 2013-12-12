@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import grails.util.Environment
 
+import grails.util.Environment
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.grails.plugins.elasticsearch.AuditEventListener
 import org.grails.plugins.elasticsearch.ClientNodeFactoryBean
@@ -34,38 +34,41 @@ class ElasticsearchGormGrailsPlugin {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
-    def version = '0.0.2.1'
+    def version = '0.1.0'
     def grailsVersion = '2.1.0 > *'
 
     def loadAfter = ['services']
 
     def pluginExcludes = [
-            'grails-app/controllers/test/**',
-            'grails-app/services/test/**',
-            'grails-app/views/elasticSearch/index.gsp',
-            'grails-app/domain/test/**',
-            'grails-app/utils/test/**',
-            'test/**',
-            'src/docs/**'
+        'grails-app/controllers/test/**',
+        'grails-app/services/test/**',
+        'grails-app/views/elasticSearch/index.gsp',
+        'grails-app/domain/test/**',
+        'grails-app/utils/test/**',
+        'test/**',
+        'src/docs/**'
     ]
 
     def license = 'APACHE'
 
-    def organization = [name: '10ne.org', url: 'http://www.10ne.org/']
+    def organization = [name: 'Dating Cafe GmbH', url: 'http://www.datingcafe.de']
 
     def developers = [
-            [name: 'Noam Y. Tenne', email: 'noam@10ne.org']
+        [name: 'Stefan Rother', email: 's.rother@datingcafe.de'],
+        [name: 'Michael Schwartz', email: 'm.schwartz@datingcafe.de'],
+        [name: 'Sven Kiesewetter', email: 's.kiesewetter@datingcafe.de']
     ]
 
-    def issueManagement = [system: 'github', url: 'https://github.com/noamt/elasticsearch-gorm-plugin/issues']
+    def issueManagement = [system: 'github', url: 'https://github.com/datingcafe/elasticsearch-gorm-plugin']
 
-    def scm = [url: 'https://github.com/noamt/elasticsearch-gorm-plugin']
+    def scm = [url: 'https://github.com/datingcafe/elasticsearch-gorm-plugin']
 
-    def author = 'Noam Y. Tenne'
-    def authorEmail = 'noam@10ne.org'
-    def title = 'ElasticSearch GORM Plugin'
-    def description = """An alternative Elasticsearch plugin for Grails. Based on, but unlike the original, this implementation aims to be DB agnostic."""
-    def documentation = 'http://noamt.github.io/elasticsearch-gorm-plugin'
+    def author = 'Stefan Rother'
+    def authorEmail = 's.rother@datingcafe.de'
+
+    def title = 'ElasticSearch Geospatial Plugin'
+    def description = """An even more alternative Elasticsearch plugin for Grails. This one enables geospatial search requests."""
+    def documentation = 'https://github.com/datingcafe/elasticsearch-gorm-plugin'
 
     def doWithSpring = {
         def esConfig = getConfiguration(application)

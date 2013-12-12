@@ -48,7 +48,7 @@ grails.project.dependency.resolution = {
             excludes 'log4j'
         }
         runtime 'com.spatial4j:spatial4j:0.3'
-        test("org.spockframework:spock-grails-support:0.7-groovy-2.0") {
+        compile("org.spockframework:spock-grails-support:0.7-groovy-2.0") {
             export = false
         }
     }
@@ -58,7 +58,7 @@ grails.project.dependency.resolution = {
             export = false
         }
 
-        test(':spock:0.7') {
+        compile(':spock:0.7') {
             export = false
         }
     }

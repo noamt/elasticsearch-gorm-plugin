@@ -2,12 +2,20 @@ package org.grails.plugins.elasticsearch
 
 import grails.plugin.spock.IntegrationSpec
 import org.apache.log4j.Logger
+import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder
+import org.elasticsearch.client.AdminClient
+import org.elasticsearch.client.ClusterAdminClient
+import org.elasticsearch.cluster.ClusterState
+import org.elasticsearch.cluster.metadata.IndexMetaData
+import org.elasticsearch.cluster.metadata.MappingMetaData
+import test.Building
+import test.GeoPoint
 import test.Product
 
 class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
+
     def elasticSearchService
     def elasticSearchAdminService
-    def elasticSearchContextHolder
     def elasticSearchHelper
     private static final Logger LOG = Logger.getLogger(this);
 
@@ -16,6 +24,13 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         println "cleaning indices"
         elasticSearchAdminService.deleteIndex()
         elasticSearchAdminService.refresh()
+    }
+
+    def cleanupSpec() {
+        def dataFolder = new File('data')
+        if (dataFolder.isDirectory()) {
+            dataFolder.deleteDir()
+        }
     }
 
     def "Index a domain object"() {
@@ -98,13 +113,13 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         result.searchResults[0].date == product.date
     }
 
-/*
     void "a geo point location is marshalled and demarshalled correctly"() {
         given:
         def location = new GeoPoint(
             lat: 53.00,
             lon: 10.00
         ).save(failOnError: true)
+
         def building = new Building(
             location: location
         ).save(failOnError: true)
@@ -113,9 +128,9 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         elasticSearchAdminService.refresh()
 
         when:
-        def result = elasticSearchService.search("${building.location}", [indices: Building, types: Building])
+        def result = elasticSearchService.search("${location}", [indices: Building, types: Building])
 
-*/
+//*/
 /*
 elasticSearchService.search([indices: Building, type: Building], query) {
 geo_distance: {
@@ -123,16 +138,68 @@ distance: "50km"
 "building.location": [ lat: 53.63, lon: 9.8 ]
 }
 }
-*//*
-
+//*/
 
         then:
-        elasticSearchHelper.client.admin().indices()
+        elasticSearchHelper.elasticSearchClient.admin().indices()
 
         result.total == 1
         result.searchResults[0].location == location
     }
-*/
+
+    void "a geo point is mapped correctly"() {
+        given:
+        def location = new GeoPoint(
+            lat: 53.00,
+            lon: 10.00
+        ).save(failOnError: true)
+
+        def building = new Building(
+            location: location
+        ).save(failOnError: true)
+
+        elasticSearchService.index(building)
+        elasticSearchAdminService.refresh()
+
+        expect:
+        def mapping = getFieldMappingMetaData("test", "building").sourceAsMap
+        mapping.(properties).location.type == 'geo_point'
+    }
+
+    def MappingMetaData getFieldMappingMetaData(String indexName, String typeName) {
+        AdminClient admin = elasticSearchHelper.elasticSearchClient.admin()
+        ClusterAdminClient cluster = admin.cluster()
+
+        ClusterStateRequestBuilder indices = cluster.prepareState().setFilterIndices(indexName)
+        ClusterState clusterState = indices.execute().actionGet().state
+        IndexMetaData indexMetaData = clusterState.metaData.index(indexName)
+        return indexMetaData.mapping(typeName)
+    }
+
+    void "search with geo distance filter"() {
+        given: "a building with a geo point location"
+        GeoPoint geoPoint = new GeoPoint(
+            lat: 53.12,
+            lon: 10.12
+        ).save(failOnError: true)
+        def building = new Building(
+            location: geoPoint
+        ).save(failOnError: true)
+
+        elasticSearchService.index(building)
+        elasticSearchAdminService.refresh()
+
+        when: "a geo distance filter search is performed"
+        def searchResult = elasticSearchService.search([indices: Building, type: Building], null as Closure, {
+            geo_distance: {
+                distance: "50km"
+                "building.location"(lat: 53.63, lon: 9.8)
+            }
+        })
+        then: "the building should be found"
+        1 == searchResult.searchResults.size()
+        product1.name == searchResult.searchResults[0].name
+    }
 
     void "searching with filtered query"() {
         given: "some products"
