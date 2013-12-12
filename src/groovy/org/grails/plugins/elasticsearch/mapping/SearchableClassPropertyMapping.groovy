@@ -29,8 +29,10 @@ class SearchableClassPropertyMapping {
 
     /** Grails attributes of this property */
     private GrailsDomainClassProperty grailsProperty
+
     /** Mapping attributes values, will be added in the ElasticSearch JSON mapping request  */
     private Map<String, Object> mappingAttributes = [:]
+
     /** Special mapping attributes, only used by the plugin itself (eg: 'component', 'reference')  */
     private Map<String, Object> specialMappingAttributes = [:]
 
@@ -99,13 +101,13 @@ class SearchableClassPropertyMapping {
 
     int getMaxDepth() {
         Object maxDepth = specialMappingAttributes.maxDepth
-        maxDepth != null ? maxDepth : 0
+        maxDepth != null ? maxDepth : 0 as int
     }
 
     Class getBestGuessReferenceType() {
         // is type defined explicitly?
-        if (getReference() instanceof Class) {
-            return getReference()
+        if (reference instanceof Class) {
+            return reference as Class
         }
 
         // is it association?

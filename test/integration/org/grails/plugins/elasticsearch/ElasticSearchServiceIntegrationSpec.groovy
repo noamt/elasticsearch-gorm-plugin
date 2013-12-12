@@ -121,6 +121,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         ).save(failOnError: true)
 
         def building = new Building(
+            name: 'WatchTower',
             location: location
         ).save(failOnError: true)
 
@@ -128,17 +129,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         elasticSearchAdminService.refresh()
 
         when:
-        def result = elasticSearchService.search("${location}", [indices: Building, types: Building])
-
-//*/
-/*
-elasticSearchService.search([indices: Building, type: Building], query) {
-geo_distance: {
-distance: "50km"
-"building.location": [ lat: 53.63, lon: 9.8 ]
-}
-}
-//*/
+        def result = elasticSearchService.search('WatchTower', [indices: Building, types: Building])
 
         then:
         elasticSearchHelper.elasticSearchClient.admin().indices()
@@ -148,6 +139,7 @@ distance: "50km"
     }
 
     void "a geo point is mapped correctly"() {
+
         given:
         def location = new GeoPoint(
             lat: 53.00,
@@ -166,7 +158,7 @@ distance: "50km"
         mapping.(properties).location.type == 'geo_point'
     }
 
-    def MappingMetaData getFieldMappingMetaData(String indexName, String typeName) {
+    private MappingMetaData getFieldMappingMetaData(String indexName, String typeName) {
         AdminClient admin = elasticSearchHelper.elasticSearchClient.admin()
         ClusterAdminClient cluster = admin.cluster()
 
