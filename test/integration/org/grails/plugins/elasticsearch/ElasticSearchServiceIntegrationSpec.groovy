@@ -217,7 +217,15 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         then: "the result should be product1"
         1 == searchResult.searchResults.size()
         wurstProduct.name == searchResult.searchResults[0].name
+    }
 
+    void "a search with one kilometer distance to postal code 80331 finds nothing"() {}
 
+    void "a search with five kilometers distance to postal code 80331 finds one location with postal code 81667"() {}
+
+    void "a search with ten kilometers distance to postal code 80331 finds locations with postal codes 81667 and 85774"() {
+    }
+
+    void "a search with 1000 kilometers distance to postal code 80331 finds locations with postal codes 81667, 85774, and 87700o"() {
     }
 }
