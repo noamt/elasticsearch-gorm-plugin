@@ -1,7 +1,6 @@
 package org.grails.plugins.elasticsearch
 
 import grails.plugin.spock.IntegrationSpec
-import org.apache.log4j.Logger
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder
 import org.elasticsearch.client.AdminClient
 import org.elasticsearch.client.ClusterAdminClient
@@ -17,14 +16,6 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
     def elasticSearchService
     def elasticSearchAdminService
     def elasticSearchHelper
-    private static final Logger LOG = Logger.getLogger(this);
-
-    def setup() {
-        // Make sure the indices are cleaned
-        println "cleaning indices"
-        elasticSearchAdminService.deleteIndex()
-        elasticSearchAdminService.refresh()
-    }
 
     def cleanupSpec() {
         def dataFolder = new File('data')
@@ -33,20 +24,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         }
     }
 
-    def "Index a domain object"() {
-        given:
-        def product = new Product(name: "myTestProduct")
-        product.save(failOnError: true)
-
-        when:
-        elasticSearchService.index(product)
-        elasticSearchAdminService.refresh() // Ensure the latest operations have been exposed on the ES instance
-
-        then:
-        elasticSearchService.search("myTestProduct", [indices: Product, types: Product]).total == 1
-    }
-
-    def "Unindex method delete index from ES"() {
+    def "Index and un-index a domain object"() {
         given:
         def product = new Product(name: "myTestProduct")
         product.save(failOnError: true)
@@ -66,7 +44,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         elasticSearchService.search("myTestProduct", [indices: Product, types: Product]).total == 0
     }
 
-    def "Indexing multiple time the same object update the corresponding ES entry"() {
+    def "Indexing the same object multiple times updates the corresponding ES entry"() {
         given:
         def product = new Product(name: "myTestProduct")
         product.save(failOnError: true)
@@ -80,6 +58,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
 
         when:
         product.name = "newProductName"
+        product.save(failOnError: true)
         elasticSearchService.index(product)
         elasticSearchAdminService.refresh()
 
@@ -89,11 +68,12 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         and:
         def result = elasticSearchService.search(product.name, [indices: Product, types: Product])
         result.total == 1
-        result.searchResults[0].name == product.name
+        List<Product> searchResults = result.searchResults
+        searchResults[0].name == product.name
 
     }
 
-    void "a date value should be marshalled and demarshalled correctly"() {
+    void "a date value should be marshalled and de-marshalled correctly"() {
         def date = new Date()
         given:
         def product = new Product(
@@ -109,11 +89,12 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
 
         then:
         result.total == 1
-        result.searchResults[0].name == product.name
-        result.searchResults[0].date == product.date
+        List<Product> searchResults = result.searchResults
+        searchResults[0].name == product.name
+        searchResults[0].date == product.date
     }
 
-    void "a geo point location is marshalled and demarshalled correctly"() {
+    void "a geo point location is marshalled and de-marshalled correctly"() {
         given:
         def location = new GeoPoint(
             lat: 53.00,
@@ -135,7 +116,8 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         elasticSearchHelper.elasticSearchClient.admin().indices()
 
         result.total == 1
-        result.searchResults[0].location == location
+        List<Building> searchResults = result.searchResults
+        searchResults[0].location == location
     }
 
     void "a geo point is mapped correctly"() {
@@ -171,10 +153,12 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
     void "search with geo distance filter"() {
         given: "a building with a geo point location"
         GeoPoint geoPoint = new GeoPoint(
-            lat: 53.12,
-            lon: 10.12
+            lat: 50.1,
+            lon: 13.3
         ).save(failOnError: true)
+
         def building = new Building(
+            name: 'Test Product',
             location: geoPoint
         ).save(failOnError: true)
 
@@ -182,15 +166,24 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         elasticSearchAdminService.refresh()
 
         when: "a geo distance filter search is performed"
-        def searchResult = elasticSearchService.search([indices: Building, type: Building], null as Closure, {
-            geo_distance: {
-                distance: "50km"
-                "building.location"(lat: 53.63, lon: 9.8)
-            }
-        })
+
+        Map params = [indices: Building, types: Building]
+        Closure query = null
+        def location = '50, 13'
+
+        Closure filter = {
+            'geo_distance'(
+                'distance': '50km',
+                'location': location
+            )
+        }
+
+        def result = elasticSearchService.search(params, query, filter)
+
         then: "the building should be found"
-        1 == searchResult.searchResults.size()
-        product1.name == searchResult.searchResults[0].name
+        1 == result.total
+        List<Building> searchResults = result.searchResults
+        searchResults[0].id == building.id
     }
 
     void "searching with filtered query"() {
@@ -208,15 +201,16 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         elasticSearchAdminService.refresh()
 
         when: "that a range filter find the product"
-        def searchResult = elasticSearchService.search(null as Closure, {
+        def result = elasticSearchService.search(null as Closure, {
             range {
-                "price"(gte: 1, lte: 3)
+                "price"(gte: 1.99, lte: 2.3)
             }
         })
 
-        then: "the result should be product1"
-        1 == searchResult.searchResults.size()
-        wurstProduct.name == searchResult.searchResults[0].name
+        then: "the result should be product 'wurst'"
+        result.total == 1
+        List<Product> searchResults = result.searchResults
+        searchResults[0].name == wurstProduct.name
     }
 
     void "a search with one kilometer distance to postal code 80331 finds nothing"() {}
