@@ -16,8 +16,6 @@
 
 package org.grails.plugins.elasticsearch.conversion.unmarshall
 
-import java.beans.PropertyEditor
-
 import org.codehaus.groovy.grails.commons.*
 import org.codehaus.groovy.grails.web.metaclass.BindDynamicMethod
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
@@ -34,6 +32,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.SimpleTypeConverter
 import org.springframework.beans.TypeConverter
 import org.springframework.util.Assert
+
+import java.beans.PropertyEditor
 
 /**
  * Domain class unmarshaller.
@@ -58,7 +58,6 @@ class DomainClassUnmarshaller {
                 LOG.warn("Unknown SearchHit: " + hit.id() + "#" + hit.type())
                 continue
             }
-            String domainClassName = scm.getDomainClass().getFullName()
 
             GrailsDomainClassProperty identifier = scm.getDomainClass().getIdentifier()
             Object id = typeConverter.convertIfNecessary(hit.id(), identifier.getType())
