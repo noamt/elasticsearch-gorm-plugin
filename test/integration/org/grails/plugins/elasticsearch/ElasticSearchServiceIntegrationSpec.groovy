@@ -17,6 +17,11 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
     def elasticSearchAdminService
     def elasticSearchHelper
 
+    /*
+     * This test class doesn't delete any ElasticSearch indices, because that would also delete the mapping.
+     * Be aware of this when indexing new objects.
+     */
+
     def cleanupSpec() {
         def dataFolder = new File('data')
         if (dataFolder.isDirectory()) {
