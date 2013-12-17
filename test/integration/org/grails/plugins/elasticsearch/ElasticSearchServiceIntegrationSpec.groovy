@@ -17,7 +17,6 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
     def elasticSearchAdminService
     def elasticSearchHelper
 
-/*
     def setupSpec() {
         [
             [lat: 48.13, lon: 11.60, name: '81667'],
@@ -28,7 +27,6 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
             new Building(name: "postalCode${it.name}", location: geoPoint).save()
         }
     }
-*/
 
     /*
      * This test class doesn't delete any ElasticSearch indices, because that would also delete the mapping.
@@ -231,22 +229,16 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults[0].name == wurstProduct.name
     }
 
-    void "a search with one kilometer distance to postal code 80331 finds nothing"() {
-    }
-
-    void "a search with five kilometers distance to postal code 80331 finds one location with postal code 81667"() {}
-
-    void "a search with ten kilometers distance to postal code 80331 finds locations with postal codes 81667 and 85774"() {
-    }
-
-    void "a search with 1000 kilometers distance to postal code 80331 finds locations with postal codes 81667, 85774, and 87700o"() {
-    }
-
     void "a geo distance search finds geo points at varying distances"() {
+        def buildings = Building.list()
+        buildings.each {
+            it.delete()
+        }
+
         when: 'a geo distance search is performed'
         Map params = [indices: Building, types: Building]
         Closure query = null
-        def location = "48.141, 11.57"
+        def location = [lat: 48.141, lon: 11.57]
 
         Closure filter = {
             'geo_distance'(
@@ -257,12 +249,10 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         def result = elasticSearchService.search(params, query, filter)
 
         then: 'all geo points in the search radius are found'
-        result.total == postalCodesFound.size()
         List<Building> searchResults = result.searchResults
-        postalCodesFound.each { String postalCode ->
-            searchResults.find { searchResult ->
-                assert searchResult.name == "postalCode${postalCode}"
-            }
+
+        (postalCodesFound.empty && searchResults.empty) || searchResults.each { searchResult ->
+            searchResult.name in postalCodesFound
         }
 
         where:
