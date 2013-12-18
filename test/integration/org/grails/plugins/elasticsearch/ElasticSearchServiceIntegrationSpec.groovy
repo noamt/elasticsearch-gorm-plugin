@@ -7,6 +7,9 @@ import org.elasticsearch.client.ClusterAdminClient
 import org.elasticsearch.cluster.ClusterState
 import org.elasticsearch.cluster.metadata.IndexMetaData
 import org.elasticsearch.cluster.metadata.MappingMetaData
+import org.elasticsearch.common.unit.DistanceUnit
+import org.elasticsearch.search.sort.SortBuilders
+import org.elasticsearch.search.sort.SortOrder
 import test.Building
 import test.GeoPoint
 import test.Product
@@ -261,5 +264,36 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         '5km'     | ['81667']
         '20km'    | ['81667', '85774']
         '1000km'  | ['81667', '85774', '87700']
+    }
+
+    void "the distances are returned"() {
+        def buildings = Building.list()
+        buildings.each {
+            it.delete()
+        }
+
+        when: 'a geo distance search ist sorted by distance'
+
+        def sortBuilder = SortBuilders.geoDistanceSort("location").
+            point(48.141, 11.57).
+            unit(DistanceUnit.KILOMETERS).
+            order(SortOrder.ASC)
+
+        Map params = [indices: Building, types: Building, sort: sortBuilder]
+        Closure query = null
+        def location = [lat: 48.141, lon: 11.57]
+
+        Closure filter = {
+            geo_distance(
+                'distance': '1000km',
+                'location': location
+            )
+        }
+        def result = elasticSearchService.search(params, query, filter)
+
+        then: 'all geo points in the search radius are found'
+        List<Building> searchResults = result.searchResults
+
+        result.sort.(searchResults[0].id) == [2.542976623368653]
     }
 }

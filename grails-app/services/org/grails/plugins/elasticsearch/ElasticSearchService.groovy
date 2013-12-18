@@ -25,6 +25,7 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.search.highlight.HighlightBuilder
+import org.elasticsearch.search.sort.SortBuilder
 import org.elasticsearch.search.sort.SortOrder
 import org.grails.plugins.elasticsearch.util.GXContentBuilder
 import org.slf4j.Logger
@@ -321,7 +322,9 @@ class ElasticSearchService implements GrailsApplicationAware {
             .size(params.size ? params.size as int : 60)
             .explain(params.explain ?: true)
 
-        if (params.sort) {
+        if (params.sort instanceof SortBuilder) {
+            source.sort(params.sort as SortBuilder)
+        } else if (params.sort) {
             source.sort(params.sort, SortOrder.valueOf(params.order?.toUpperCase() ?: "ASC"))
         }
 
@@ -407,6 +410,14 @@ class ElasticSearchService implements GrailsApplicationAware {
                     scoreResults[(hit.id)] = hit.score
                 }
                 result.scores = scoreResults
+            }
+
+            if (params.sort) {
+                def sortValues = [:]
+                searchHits.each { SearchHit hit ->
+                    sortValues[hit.id] = hit.sortValues
+                }
+                result.sort = sortValues
             }
 
             result
