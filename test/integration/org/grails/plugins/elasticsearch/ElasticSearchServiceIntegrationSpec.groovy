@@ -241,7 +241,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         def location = [lat: 48.141, lon: 11.57]
 
         Closure filter = {
-            'geo_distance'(
+            geo_distance(
                 'distance': distance,
                 'location': location
             )
@@ -261,6 +261,5 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         '5km'     | ['81667']
         '20km'    | ['81667', '85774']
         '1000km'  | ['81667', '85774', '87700']
-
     }
 }
