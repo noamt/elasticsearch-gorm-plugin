@@ -431,15 +431,6 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         result.sort.(searchResults[0].id) == [2.542976623368653]
     }
 
-    void "At the start of a test method the index should be empty."() {
-        when: 'unindex is called'
-        elasticSearchService.unindex([:])
-        elasticSearchAdminService.refresh()
-
-        then: 'the index should be empty'
-        !elasticSearchService.search(null as Closure, [:]).total
-    }
-
     void "The unindex method should empty the index."() {
         when: 'unindex is called'
         elasticSearchService.unindex([:])
