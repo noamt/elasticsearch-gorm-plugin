@@ -1,7 +1,6 @@
 package org.grails.plugins.elasticsearch
 
 import grails.plugin.spock.IntegrationSpec
-import org.apache.log4j.Logger
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder
 import org.elasticsearch.client.AdminClient
 import org.elasticsearch.client.ClusterAdminClient
@@ -296,13 +295,64 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults[0].name == product01.name
     }
 
-    void "At the start of a test method the index should be empty."() {
-        when: 'unindex is called'
-        elasticSearchService.unindex([:])
+    void "Paging and sorting through search results"() {
+        given: 'a bunch of products'
+        def product
+        10.times {
+            product = new Product(name: "Produkt${it}", price: it).save(failOnError: true, flush: true)
+            elasticSearchService.index(product)
+        }
         elasticSearchAdminService.refresh()
 
-        then: 'the index should be empty'
-        !elasticSearchService.search(null as Closure, [:]).total
+        when: "a search is performed"
+        def params = [from: 3, size: 2, indices: Product, types: Product, sort: 'name']
+        def query = {
+            wildcard("name": "produkt*")
+        }
+        def result = elasticSearchService.search(query, params)
+
+        then: "the correct result-part is returned"
+        result.total == 10
+        result.searchResults.size() == 2
+        result.searchResults*.name == ['Produkt3', 'Produkt4']
+    }
+
+    void "A search with Uppercase Characters should return appropriate results"() {
+        given: 'a product with an uppercase name'
+        def product = new Product(name: "Großer Kasten", price: 0.85).save(failOnError: true, flush: true)
+        elasticSearchService.index(product)
+        elasticSearchAdminService.refresh()
+
+        when: "a search is performed"
+        def params = [indices: Product, types: Product]
+        def query = {
+            wildcard("name": "Groß*")
+        }
+        def result = elasticSearchService.search(query, params)
+
+        then: "the correct result-part is returned"
+        result.total == 1
+        result.searchResults.size() == 1
+        result.searchResults*.name == ['Großer Kasten']
+    }
+
+    void "A search with lowercase Characters should return appropriate results"() {
+        given: 'a product with a lowercase name'
+        def product = new Product(name: "KLeiner kasten", price: 0.45).save(failOnError: true, flush: true)
+        elasticSearchService.index(product)
+        elasticSearchAdminService.refresh()
+
+        when: "a search is performed"
+        def params = [indices: Product, types: Product]
+        def query = {
+            wildcard("name": "klein*")
+        }
+        def result = elasticSearchService.search(query, params)
+
+        then: "the correct result-part is returned"
+        result.total == 1
+        result.searchResults.size() == 1
+        result.searchResults*.name == ['KLeiner kasten']
     }
 
     void "a search with one kilometer distance to postal code 80331 finds nothing"() {}
@@ -315,4 +365,15 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
 
     void "a search with 1000 kilometers distance to postal code 80331 finds locations with postal codes 81667, 85774, and 87700o"() {
     }
+
+    void "The unindex method should empty the index."() {
+        when: 'unindex is called'
+        elasticSearchService.unindex([:])
+        elasticSearchAdminService.refresh()
+
+        then: 'the index should be empty'
+        !elasticSearchService.search(null as Closure, [:]).total
+    }
+
+
 }
