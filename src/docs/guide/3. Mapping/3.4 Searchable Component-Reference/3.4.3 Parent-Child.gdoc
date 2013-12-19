@@ -1,0 +1,19 @@
+To map a parent/child relationship, the child element must contain the parent element as a component.
+This component must be mapped as a parent in the child element.
+
+h4. Example
+
+{code}
+class ParentElement {
+…
+}
+
+class Child {
+    ParentElement parentElement
+
+    static searchable = {
+        parentElement parent: true, component: true
+    }
+}
+{code}
+

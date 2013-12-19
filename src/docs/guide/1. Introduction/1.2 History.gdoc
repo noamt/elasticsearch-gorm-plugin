@@ -1,4 +1,13 @@
 h4. History
+
+* 0.1.0 (December 19, 2013)
+** GeoPoint mapping
+** supports filters (e.g. geo_reference)
+** supports sort builders (e.g. for geo_distance sorting)
+** sadly adds a hibernate dependency for the test domain classes
+** fixed: Date values are now unmarshalled with correct time zone
+** known bug: GeoPoints are unmarshalled as null
+** removed dependency for Java 7
 * November 24, 2013
 ** 0.0.2.1 Bugfix release
 * November 12, 2013
@@ -8,7 +17,10 @@ h4. History
 
 h4. Authors and Contributors
 
-Noam Y. Tenne
+Noam Y. Tenne,
+Stefan Rother-Stübs (Dating Cafe),
+Sven Kiesewetter (Dating Cafe),
+Michael Schwartz (Dating Cafe)
 
 h4. Authors and Contributors of the original plugin
 

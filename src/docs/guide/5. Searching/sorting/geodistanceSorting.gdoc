@@ -1,0 +1,19 @@
+To sort for geo distances, a SortBuilder must be passed to search()
+
+h4. Example
+
+{code}
+        def sortBuilder = SortBuilders.geoDistanceSort("location").
+            point(48.141, 11.57).
+            unit(DistanceUnit.KILOMETERS).
+            order(SortOrder.ASC)
+
+def result = elasticSearchService.search([indices: Building, types: Building, sort: sortBuilder],
+                                                                    null as Closure,
+                                                                    {
+                                                                        geo_distance(
+                                                                            'distance': '5km',
+                                                                            'location': [lat: 48.141, lon: 11.57]
+                                                                        )
+                                                                    })
+{code}
