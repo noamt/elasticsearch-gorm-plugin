@@ -1,31 +1,31 @@
-1. Introduction:
+introduction:
   title: Introduction
-  1.1 Features: Features
-  1.2 History: History
-2. Configuration: Configuration
-3. Mapping:
+  features: Features
+  history: History
+configuration: Configuration
+mapping:
   title: Mapping
-  3.1 QuickStart: QuickStart
-  3.2 Class mapping: Class Mapping
-  3.3 Properties mapping: Properties mapping
-  3.4 Searchable Component-Reference:
+  quickStart: QuickStart
+  classMapping: Class Mapping
+  propertiesMapping: Properties mapping
+  searchableComponentReference:
     title: Searchable Component-Reference
-    3.4.1 Searchable Reference: Searchable Reference
-    3.4.2 Searchable Component: Searchable Component
-    3.4.3 Parent-Child: Parent-Child
-4. Indexing: Indexing
-5. Searching:
+    searchableReference: Searchable Reference
+    searchableComponent: Searchable Component
+    parentChild: Parent-Child
+indexing: Indexing
+searching:
   title: Searching
-  5.1 Query Strings: Query Strings
-  5.2 Query Closure: Query Closure
-  5.3 Highlighting: Highlighting
+  queryStrings: Query Strings
+  queryClosure: Query Closure
+  highlighting: Highlighting
   sorting:
     title: Sorting
     geodistanceSorting: geoDistanceSorting
-6. Admin:
+admin:
   title: Admin
-  6.1 Refresh: Refresh
-  6.2 Delete Index: Delete Index
-7. Low level API: Low level API
-8. Example: Example
+  refresh: Refresh
+  deleteIndex: Delete Index
+lowLevelAPI: Low level API
+example: Example
 
