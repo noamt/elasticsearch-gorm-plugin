@@ -1,12 +1,19 @@
 package org.grails.plugins.elasticsearch
 
 import grails.plugin.spock.IntegrationSpec
+import org.apache.log4j.Logger
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder
 import org.elasticsearch.client.AdminClient
 import org.elasticsearch.client.ClusterAdminClient
 import org.elasticsearch.cluster.ClusterState
 import org.elasticsearch.cluster.metadata.IndexMetaData
 import org.elasticsearch.cluster.metadata.MappingMetaData
+import org.elasticsearch.common.unit.DistanceUnit
+import org.elasticsearch.search.sort.SortBuilders
+import org.elasticsearch.search.sort.SortOrder
+import test.Building
+import test.GeoPoint
+import test.Product
 import org.elasticsearch.index.query.QueryBuilders
 import test.*
 
@@ -33,6 +40,15 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
 
         def product04 = new Product(name: "high and supreme", price: 45.50)
         product04.save(failOnError: true)
+
+        [
+            [lat: 48.13, lon: 11.60, name: '81667'],
+            [lat: 48.19, lon: 11.65, name: '85774'],
+            [lat: 47.98, lon: 10.18, name: '87700']
+        ].each {
+            def geoPoint = new GeoPoint(lat: it.lat, lon: it.lon).save(failOnError: true)
+            new Building(name: "postalCode${it.name}", location: geoPoint).save(failOnError: true)
+        }
     }
 
     def cleanupSpec() {
@@ -111,7 +127,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults[0].date == product.date
     }
 
-    def "a geo point location is marshalled and de-marshalled correctly"() {
+    void "a geo point location is marshalled and de-marshalled correctly"() {
         given:
         def location = new GeoPoint(
             lat: 53.00,
@@ -137,7 +153,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults[0].location == location
     }
 
-    def "a geo point is mapped correctly"() {
+    void "a geo point is mapped correctly"() {
 
         given:
         def location = new GeoPoint(
@@ -167,7 +183,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         return indexMetaData.mapping(typeName)
     }
 
-    def "search with geo distance filter"() {
+    void "search with geo distance filter"() {
         given: "a building with a geo point location"
         GeoPoint geoPoint = new GeoPoint(
             lat: 50.1,
@@ -203,7 +219,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults[0].id == building.id
     }
 
-    def "searching with filtered query"() {
+    void "searching with filtered query"() {
         given: "some products"
         def wurmProduct = new Product(name: "wurm", price: 2.00)
         wurmProduct.save(failOnError: true)
@@ -272,7 +288,6 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults3[0].name == 'high and supreme'
     }
 
-
     void "searching for special characters in data pool"() {
 
         given: "some products"
@@ -319,7 +334,132 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         !result.searchResults.empty
     }
 
-    void "At the start of a test method the index should be empty."() {
+    void "Paging and sorting through search results"() {
+        given: 'a bunch of products'
+        def product
+        10.times {
+            product = new Product(name: "Produkt${it}", price: it).save(failOnError: true, flush: true)
+            elasticSearchService.index(product)
+        }
+        elasticSearchAdminService.refresh()
+
+        when: "a search is performed"
+        def params = [from: 3, size: 2, indices: Product, types: Product, sort: 'name']
+        def query = {
+            wildcard("name": "produkt*")
+        }
+        def result = elasticSearchService.search(query, params)
+
+        then: "the correct result-part is returned"
+        result.total == 10
+        result.searchResults.size() == 2
+        result.searchResults*.name == ['Produkt3', 'Produkt4']
+    }
+
+    void "A search with Uppercase Characters should return appropriate results"() {
+        given: 'a product with an uppercase name'
+        def product = new Product(name: "Großer Kasten", price: 0.85).save(failOnError: true, flush: true)
+        elasticSearchService.index(product)
+        elasticSearchAdminService.refresh()
+
+        when: "a search is performed"
+        def params = [indices: Product, types: Product]
+        def query = {
+            wildcard("name": "Groß*")
+        }
+        def result = elasticSearchService.search(query, params)
+
+        then: "the correct result-part is returned"
+        result.total == 1
+        result.searchResults.size() == 1
+        result.searchResults*.name == ['Großer Kasten']
+    }
+
+    void "A search with lowercase Characters should return appropriate results"() {
+        given: 'a product with a lowercase name'
+        def product = new Product(name: "KLeiner kasten", price: 0.45).save(failOnError: true, flush: true)
+        elasticSearchService.index(product)
+        elasticSearchAdminService.refresh()
+
+        when: "a search is performed"
+        def params = [indices: Product, types: Product]
+        def query = {
+            wildcard("name": "klein*")
+        }
+        def result = elasticSearchService.search(query, params)
+
+        then: "the correct result-part is returned"
+        result.total == 1
+        result.searchResults.size() == 1
+        result.searchResults*.name == ['KLeiner kasten']
+    }
+
+    void "a geo distance search finds geo points at varying distances"() {
+        def buildings = Building.list()
+        buildings.each {
+            it.delete()
+        }
+
+        when: 'a geo distance search is performed'
+        Map params = [indices: Building, types: Building]
+        Closure query = null
+        def location = [lat: 48.141, lon: 11.57]
+
+        Closure filter = {
+            geo_distance(
+                'distance': distance,
+                'location': location
+            )
+        }
+        def result = elasticSearchService.search(params, query, filter)
+
+        then: 'all geo points in the search radius are found'
+        List<Building> searchResults = result.searchResults
+
+        (postalCodesFound.empty && searchResults.empty) || searchResults.each { searchResult ->
+            searchResult.name in postalCodesFound
+        }
+
+        where:
+        distance || postalCodesFound
+        '1km'     | []
+        '5km'     | ['81667']
+        '20km'    | ['81667', '85774']
+        '1000km'  | ['81667', '85774', '87700']
+    }
+
+    void "the distances are returned"() {
+        def buildings = Building.list()
+        buildings.each {
+            it.delete()
+        }
+
+        when: 'a geo distance search ist sorted by distance'
+
+        def sortBuilder = SortBuilders.geoDistanceSort("location").
+            point(48.141, 11.57).
+            unit(DistanceUnit.KILOMETERS).
+            order(SortOrder.ASC)
+
+        Map params = [indices: Building, types: Building, sort: sortBuilder]
+        Closure query = null
+        def location = [lat: 48.141, lon: 11.57]
+
+        Closure filter = {
+            geo_distance(
+                'distance': '5km',
+                'location': location
+            )
+        }
+        def result = elasticSearchService.search(params, query, filter)
+
+        then: 'all geo points in the search radius are found'
+        List<Building> searchResults = result.searchResults
+
+        result.sort.(searchResults[0].id) == [2.542976623368653]
+    }
+
+    void "The unindex method should empty the index."() {
         when: 'unindex is called'
         elasticSearchService.unindex([:])
         elasticSearchAdminService.refresh()
@@ -328,14 +468,5 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         !elasticSearchService.search(null as Closure, [:]).total
     }
 
-    void "a search with one kilometer distance to postal code 80331 finds nothing"() {}
 
-    void "a search with five kilometers distance to postal code 80331 finds one location with postal code 81667"() {
-    }
-
-    void "a search with ten kilometers distance to postal code 80331 finds locations with postal codes 81667 and 85774"() {
-    }
-
-    void "a search with 1000 kilometers distance to postal code 80331 finds locations with postal codes 81667, 85774, and 87700o"() {
-    }
 }
