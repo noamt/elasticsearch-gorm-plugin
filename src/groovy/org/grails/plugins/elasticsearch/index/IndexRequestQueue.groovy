@@ -165,7 +165,7 @@ class IndexRequestQueue implements InitializingBean {
                     .setId(key.id) // TODO : Composite key ?
                     .setSource(json)
                 if (parentMapping) {
-                    index = index.setParent(value."${parentMapping.propertyName}".id)
+                    index = index.setParent(value."${parentMapping.propertyName}".id?.toString())
                 }
 
                 bulkRequestBuilder.add(index)

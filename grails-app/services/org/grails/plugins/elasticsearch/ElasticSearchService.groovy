@@ -21,6 +21,7 @@ import org.elasticsearch.action.count.CountRequest
 import org.elasticsearch.action.search.SearchRequest
 import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.client.Client
+import org.elasticsearch.index.query.QueryBuilder
 import org.elasticsearch.index.query.QueryStringQueryBuilder
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.builder.SearchSourceBuilder
@@ -72,6 +73,15 @@ class ElasticSearchService implements GrailsApplicationAware {
 
     def search(Closure query, Map params) {
         search(params, query)
+    }
+
+    def search(Map params, QueryBuilder query, Closure filter = null) {
+        SearchRequest request = buildSearchRequest(query, filter, params)
+        search(request, params)
+    }
+
+    def search(QueryBuilder query, Closure filter = null, Map params = [:]) {
+        search(params, query, filter)
     }
 
     /**
@@ -345,6 +355,8 @@ class ElasticSearchService implements GrailsApplicationAware {
             source.highlight highlighter
         }
 
+        source.explain(false)
+
         SearchRequest request = new SearchRequest()
         request.searchType SearchType.DFS_QUERY_THEN_FETCH
         request.source source
@@ -363,6 +375,10 @@ class ElasticSearchService implements GrailsApplicationAware {
 
     SearchSourceBuilder setQueryInSource(SearchSourceBuilder source, Closure query, Map params = [:]) {
         source.query(new GXContentBuilder().buildAsBytes(query))
+    }
+
+    SearchSourceBuilder setQueryInSource(SearchSourceBuilder source, QueryBuilder query, Map params = [:]) {
+        source.query(query)
     }
 
     /**

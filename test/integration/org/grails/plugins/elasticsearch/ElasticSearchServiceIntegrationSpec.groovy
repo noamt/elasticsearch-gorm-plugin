@@ -1,16 +1,14 @@
 package org.grails.plugins.elasticsearch
 
 import grails.plugin.spock.IntegrationSpec
-import org.apache.log4j.Logger
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder
 import org.elasticsearch.client.AdminClient
 import org.elasticsearch.client.ClusterAdminClient
 import org.elasticsearch.cluster.ClusterState
 import org.elasticsearch.cluster.metadata.IndexMetaData
 import org.elasticsearch.cluster.metadata.MappingMetaData
-import test.Building
-import test.GeoPoint
-import test.Product
+import org.elasticsearch.index.query.QueryBuilders
+import test.*
 
 class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
 
@@ -294,6 +292,31 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         result.total == 1
         List<Product> searchResults = result.searchResults
         searchResults[0].name == product01.name
+    }
+
+    void "searching for features of the parent element from the actual element"() {
+
+        given: "parent and child elements"
+
+        def parentParentElement = new Store(name: "Eltern-Elternelement", owner: "Horst")
+        parentParentElement.save(failOnError: true)
+        def parentElement = new Department(name: "Elternelement", numberOfProducts: 4, store: parentParentElement)
+        parentElement.save(failOnError: true)
+        def childElement = new Product(name: "Kindelement", price: 5.00)
+        childElement.save(failOnError: true)
+
+        elasticSearchService.index(parentParentElement, parentElement, childElement)
+        elasticSearchAdminService.refresh()
+
+        when:
+        def result = elasticSearchService.search(
+            QueryBuilders.hasParentQuery("store", QueryBuilders.matchQuery("owner", "Horst")),
+            null as Closure,
+            [indices: Department, types: Department]
+        )
+
+        then:
+        !result.searchResults.empty
     }
 
     void "At the start of a test method the index should be empty."() {
