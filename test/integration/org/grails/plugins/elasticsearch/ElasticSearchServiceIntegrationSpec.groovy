@@ -1,6 +1,7 @@
 package org.grails.plugins.elasticsearch
 
 import grails.plugin.spock.IntegrationSpec
+import org.apache.log4j.Logger
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder
 import org.elasticsearch.client.AdminClient
 import org.elasticsearch.client.ClusterAdminClient
@@ -180,7 +181,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         return indexMetaData.mapping(typeName)
     }
 
-    def "search with geo distance filter"() {
+    void "search with geo distance filter"() {
         given: "a building with a geo point location"
         GeoPoint geoPoint = new GeoPoint(
             lat: 50.1,
@@ -285,7 +286,6 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults3[0].name == 'high and supreme'
     }
 
-
     void "searching for special characters in data pool"() {
 
         given: "some products"
@@ -307,71 +307,6 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults[0].name == product01.name
     }
 
-    void "a geo distance search finds geo points at varying distances"() {
-        def buildings = Building.list()
-        buildings.each {
-            it.delete()
-        }
-
-        when: 'a geo distance search is performed'
-        Map params = [indices: Building, types: Building]
-        Closure query = null
-        def location = [lat: 48.141, lon: 11.57]
-
-        Closure filter = {
-            geo_distance(
-                'distance': distance,
-                'location': location
-            )
-        }
-        def result = elasticSearchService.search(params, query, filter)
-
-        then: 'all geo points in the search radius are found'
-        List<Building> searchResults = result.searchResults
-
-        (postalCodesFound.empty && searchResults.empty) || searchResults.each { searchResult ->
-            searchResult.name in postalCodesFound
-        }
-
-        where:
-        distance || postalCodesFound
-        '1km'     | []
-        '5km'     | ['81667']
-        '20km'    | ['81667', '85774']
-        '1000km'  | ['81667', '85774', '87700']
-    }
-
-    void "the distances are returned"() {
-        def buildings = Building.list()
-        buildings.each {
-            it.delete()
-        }
-
-        when: 'a geo distance search ist sorted by distance'
-
-        def sortBuilder = SortBuilders.geoDistanceSort("location").
-            point(48.141, 11.57).
-            unit(DistanceUnit.KILOMETERS).
-            order(SortOrder.ASC)
-
-        Map params = [indices: Building, types: Building, sort: sortBuilder]
-        Closure query = null
-        def location = [lat: 48.141, lon: 11.57]
-
-        Closure filter = {
-            geo_distance(
-                'distance': '5km',
-                'location': location
-            )
-        }
-        def result = elasticSearchService.search(params, query, filter)
-
-        then: 'all geo points in the search radius are found'
-        List<Building> searchResults = result.searchResults
-
-        result.sort.(searchResults[0].id) == [2.542976623368653]
-    }
-
     void "At the start of a test method the index should be empty."() {
         when: 'unindex is called'
         elasticSearchService.unindex([:])
@@ -380,4 +315,78 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         then: 'the index should be empty'
         !elasticSearchService.search(null as Closure, [:]).total
     }
+
+    void "a geo distance search finds geo points at varying distances"() {
+         def buildings = Building.list()
+         buildings.each {
+             it.delete()
+         }
+ 
+         when: 'a geo distance search is performed'
+         Map params = [indices: Building, types: Building]
+         Closure query = null
+         def location = [lat: 48.141, lon: 11.57]
+ 
+         Closure filter = {
+             geo_distance(
+                 'distance': distance,
+                 'location': location
+             )
+         }
+         def result = elasticSearchService.search(params, query, filter)
+ 
+         then: 'all geo points in the search radius are found'
+         List<Building> searchResults = result.searchResults
+ 
+         (postalCodesFound.empty && searchResults.empty) || searchResults.each { searchResult ->
+             searchResult.name in postalCodesFound
+         }
+ 
+         where:
+         distance || postalCodesFound
+         '1km'     | []
+         '5km'     | ['81667']
+         '20km'    | ['81667', '85774']
+         '1000km'  | ['81667', '85774', '87700']
+     }
+ 
+     void "the distances are returned"() {
+         def buildings = Building.list()
+         buildings.each {
+             it.delete()
+         }
+ 
+         when: 'a geo distance search ist sorted by distance'
+ 
+         def sortBuilder = SortBuilders.geoDistanceSort("location").
+             point(48.141, 11.57).
+             unit(DistanceUnit.KILOMETERS).
+             order(SortOrder.ASC)
+ 
+         Map params = [indices: Building, types: Building, sort: sortBuilder]
+         Closure query = null
+         def location = [lat: 48.141, lon: 11.57]
+ 
+         Closure filter = {
+             geo_distance(
+                 'distance': '5km',
+                 'location': location
+             )
+         }
+         def result = elasticSearchService.search(params, query, filter)
+ 
+         then: 'all geo points in the search radius are found'
+         List<Building> searchResults = result.searchResults
+ 
+         result.sort.(searchResults[0].id) == [2.542976623368653]
+     }
+ 
+     void "At the start of a test method the index should be empty."() {
+         when: 'unindex is called'
+         elasticSearchService.unindex([:])
+         elasticSearchAdminService.refresh()
+ 
+         then: 'the index should be empty'
+         !elasticSearchService.search(null as Closure, [:]).total
+     }
 }
