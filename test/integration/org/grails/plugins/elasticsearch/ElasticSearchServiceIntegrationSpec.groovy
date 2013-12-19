@@ -124,7 +124,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults[0].date == product.date
     }
 
-    def "a geo point location is marshalled and de-marshalled correctly"() {
+    void "a geo point location is marshalled and de-marshalled correctly"() {
         given:
         def location = new GeoPoint(
             lat: 53.00,
@@ -150,7 +150,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults[0].location == location
     }
 
-    def "a geo point is mapped correctly"() {
+    void "a geo point is mapped correctly"() {
 
         given:
         def location = new GeoPoint(
@@ -216,7 +216,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults[0].id == building.id
     }
 
-    def "searching with filtered query"() {
+    void "searching with filtered query"() {
         given: "some products"
         def wurmProduct = new Product(name: "wurm", price: 2.00)
         wurmProduct.save(failOnError: true)
@@ -307,22 +307,11 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults[0].name == product01.name
     }
 
-    void "At the start of a test method the index should be empty."() {
-        when: 'unindex is called'
-        elasticSearchService.unindex([:])
-        elasticSearchAdminService.refresh()
-
-        then: 'the index should be empty'
-        !elasticSearchService.search(null as Closure, [:]).total
-    }
-
     void "a geo distance search finds geo points at varying distances"() {
-/*
         def buildings = Building.list()
         buildings.each {
             it.delete()
         }
-*/
 
         when: 'a geo distance search is performed'
         Map params = [indices: Building, types: Building]
@@ -353,12 +342,10 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
     }
 
     void "the distances are returned"() {
-/*
         def buildings = Building.list()
         buildings.each {
             it.delete()
         }
-*/
 
         when: 'a geo distance search ist sorted by distance'
 
@@ -383,5 +370,14 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         List<Building> searchResults = result.searchResults
 
         result.sort.(searchResults[0].id) == [2.542976623368653]
+    }
+
+    void "At the start of a test method the index should be empty."() {
+        when: 'unindex is called'
+        elasticSearchService.unindex([:])
+        elasticSearchAdminService.refresh()
+
+        then: 'the index should be empty'
+        !elasticSearchService.search(null as Closure, [:]).total
     }
 }
