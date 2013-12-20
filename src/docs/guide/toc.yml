@@ -40,4 +40,5 @@ example:
     title: Geo Distance Search
     geoDistanceDomains: Domains
     geoDistanceService: Service Methods
+  parentChildExample: Parent/Child mapping
 

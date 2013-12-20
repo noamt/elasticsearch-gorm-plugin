@@ -22,3 +22,11 @@ def searchForBuildings() {
     return [results: result.searchResults, distances: result.sort]
 }
 {code}
+
+The calculated distances are not part of the search results themselves but are part of @result.sort@.
+@sort@ contains all search values calculated by the ElasticSearch server as a list mapped to the id of the respective domain objects
+
+h4. Example
+{code:groovy}
+assert [1:[23, 42], 2: [24, 40]] == result.sort
+{code}
