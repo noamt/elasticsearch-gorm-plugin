@@ -24,4 +24,4 @@ class Building {
 }
 {code}
 
-The location of the building is mapped to a ES geo_point
+The location of the building is mapped to an ElasticSearch [geo_point|http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html].

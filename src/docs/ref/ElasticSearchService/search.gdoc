@@ -22,6 +22,20 @@ def res = elasticSearchService.search(){
 def res = elasticSearchService.search(from:0, size:30, indices:"tweet") {
     queryString("${params.query}")
 }
+
+def sortBuilder = SortBuilders.fieldSort("name").order(SortOrder.ASC)
+
+def res = elasticSearchService.search([sort: sortBuilder], { match("name": "foo") })
+
+def res = elasticSearchService.search(null as Closure, {
+            range {
+                "price"(gte: 1.99, lte: 2.3)
+            }
+        })
+
+def res = elasticSearchService.search({
+    wildcard("name": "*st")
+}, [:])
 {code}
 
 h2. Description
@@ -29,9 +43,10 @@ h2. Description
 @search@ signatures:
 
 {code}
+def search(Map params, Closure query, Closure filter = null)
+def search(Closure query, Closure filter = null, Map params = [:])
 def search(Closure query, Map params)
-def search(Map params, Closure query)
-def search(String query, Map params)
+def search(String query, Map params = [:])
 {code}
 
 h2. Parameters
@@ -45,8 +60,9 @@ h2. Parameters
 * @params@ - A list of additional parameters to customize the searching process
 ** @from@ and @size@ - From (hit) and the size (number of hits) to return.
 ** @sort@ - Sort based on different fields including ElasticSearch's internal ones (like @_score@)
-*** As a @String@, sort for the field @sort@
-** @order@ - Sort order (ASC or DESC)
+*** As a @String@, sort by the field with this name (e.g. @sort: 'name'@ means 'sort by @name@')
+*** Can also be a @SortBuilder@
+** @order@ - Sort order ("ASC" or "DESC", case insensitive). Default: "ASC"
 ** @indices@ - Limit the search only to the specified indices (may be a @String@, or @Collection@ of @String@)
 ** @types@ - Limit the search only to the specified types (domains) (may be a @String@, or @Collection@ of @String@).
 ** @highlight@ - A @Closure@ containing the [highlighting|guide:highlighting] settings.
@@ -58,4 +74,5 @@ Return a @Map@ containing:
 * a @searchResults@ entry, containing the hits.
 * a @scores@ entry, containing the hits' scores.
 * a @highlight@ entry if the @highlighter@ parameter was set.
-* a @sort@ entry if the @sort@ parameter was set. Contains all @sortValue@s of the search
+* a @sort@ entry if the @sort@ parameter was set. Contains all @sortValue@s of the search. Maps the id of a search hit to the sort values
+** Example: @[id: [12.34]]@

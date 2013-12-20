@@ -1,22 +1,24 @@
+Searching for all buildings sorted by distance with 5km radius around geo location (lat=41.141, lon=11.57)
+
 {code:groovy}
 def searchForBuildings() {
-        Closure filter = {
-            geo_distance(
-                'distance': '5km',
-                'location': [lat: 48.141, lon: 11.57]
-            )
-        }
+    Closure filter = {
+        geo_distance(
+            'distance': '5km',
+            'location': [lat: 48.141, lon: 11.57]
+        )
+    }
 
-        def sortBuilder = SortBuilders.geoDistanceSort("location").
-            point(48.141, 11.57).
-            unit(DistanceUnit.KILOMETERS).
-            order(SortOrder.ASC)
+    def sortBuilder = SortBuilders.geoDistanceSort("location").
+        point(48.141, 11.57).
+        unit(DistanceUnit.KILOMETERS).
+        order(SortOrder.ASC)
 
-        def result = elasticSearchService.search(
-            [indices: Building, types: Building, sort: sortBuilder],
-            null as Closure,
-            filter)
+    def result = elasticSearchService.search(
+        [indices: Building, types: Building, sort: sortBuilder],
+        null as Closure,
+        filter)
 
-        [results: result.searchResults, distances: result.sort]
+    return [results: result.searchResults, distances: result.sort]
 }
 {code}

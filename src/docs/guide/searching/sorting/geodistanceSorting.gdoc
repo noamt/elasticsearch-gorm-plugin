@@ -3,10 +3,10 @@ To sort for geo distances, a SortBuilder must be passed to search()
 h4. Example
 
 {code:groovy}
-        def sortBuilder = SortBuilders.geoDistanceSort("location").
-            point(48.141, 11.57).
-            unit(DistanceUnit.KILOMETERS).
-            order(SortOrder.ASC)
+def sortBuilder = SortBuilders.geoDistanceSort("location")
+    .point(48.141, 11.57)
+    .unit(DistanceUnit.KILOMETERS)
+    .order(SortOrder.ASC)
 
 def result = elasticSearchService.search(
     [indices: Building, types: Building, sort: sortBuilder],
