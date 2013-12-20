@@ -24,7 +24,7 @@ def res = elasticSearchService.search(from:0, size:30, indices:"tweet") {
 }
 {code}
 
-h4. Description
+h2. Description
 
 @search@ signatures:
 
@@ -34,22 +34,28 @@ def search(Map params, Closure query)
 def search(String query, Map params)
 {code}
 
-h4. Parameters
+h2. Parameters
 
 * @query@ - The search query.
 ** As a @String@, the query is parsed by the Lucene query parser for advanced searching.
 ** Can also be a @Closure@, using the Groovy Query DSL of the ElasticSearch groovy client.
+** Can also be a @QueryBuilder@
+* @filter@ - The search filter
+** A @Closure@, using the Groovy Query DSL of the ElasticSearch groovy client.
 * @params@ - A list of additional parameters to customize the searching process
 ** @from@ and @size@ - From (hit) and the size (number of hits) to return.
 ** @sort@ - Sort based on different fields including ElasticSearch's internal ones (like @_score@)
+*** As a @String@, sort for the field @sort@
+** @order@ - Sort order (ASC or DESC)
 ** @indices@ - Limit the search only to the specified indices (may be a @String@, or @Collection@ of @String@)
 ** @types@ - Limit the search only to the specified types (domains) (may be a @String@, or @Collection@ of @String@).
 ** @highlight@ - A @Closure@ containing the [highlighting|guide:highlighting] settings.
 
-h4. Returned value
+h2. Returned value
 
 Return a @Map@ containing:
 * a @total@ entry, representing the total number of hits found.
 * a @searchResults@ entry, containing the hits.
 * a @scores@ entry, containing the hits' scores.
 * a @highlight@ entry if the @highlighter@ parameter was set.
+* a @sort@ entry if the @sort@ parameter was set. Contains all @sortValue@s of the search
