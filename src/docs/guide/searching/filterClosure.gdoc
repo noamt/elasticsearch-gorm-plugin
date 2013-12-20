@@ -1,13 +1,8 @@
-To sort for geo distances, a SortBuilder must be passed to search()
+A filter closure can be passed as a second argument after the search closure to the search method.
 
 h4. Example
 
 {code}
-        def sortBuilder = SortBuilders.geoDistanceSort("location").
-            point(48.141, 11.57).
-            unit(DistanceUnit.KILOMETERS).
-            order(SortOrder.ASC)
-
 def result = elasticSearchService.search(
     [indices: Building, types: Building, sort: sortBuilder],
     null as Closure,

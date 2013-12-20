@@ -7,17 +7,20 @@ mapping:
   title: Mapping
   quickStart: QuickStart
   classMapping: Class Mapping
-  propertiesMapping: Properties mapping
+  propertiesMapping:
+    title: Properties mapping
+    parentChild: Parent-Child
+    geoPoint: GeoPoint
   searchableComponentReference:
     title: Searchable Component-Reference
     searchableReference: Searchable Reference
     searchableComponent: Searchable Component
-    parentChild: Parent-Child
 indexing: Indexing
 searching:
   title: Searching
   queryStrings: Query Strings
   queryClosure: Query Closure
+  filterClosure: Filter Closure
   highlighting: Highlighting
   sorting:
     title: Sorting
@@ -27,5 +30,14 @@ admin:
   refresh: Refresh
   deleteIndex: Delete Index
 lowLevelAPI: Low level API
-example: Example
+example:
+  title: Example
+  twitter:
+    title: Tweets
+    theDomains: The domains
+    theController: The controller
+  geoDistanceSearch:
+    title: Geo Distance Search
+    geoDistanceDomains: Domains
+    geoDistanceService: Service Methods
 

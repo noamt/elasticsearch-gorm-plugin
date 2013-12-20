@@ -1,0 +1,27 @@
+
+{code}
+class GeoPoint {
+
+    Double lat
+    Double lon
+
+    static searchable = {
+        root false
+    }
+}
+{code}
+GeoPoint represents the geo coordinates for a building. The field names @lat@ and @lon@ are mandatory.
+
+{code}
+class Building {
+
+    String name
+    GeoPoint location
+
+    static searchable = {
+        location geoPoint: true
+    }
+}
+{code}
+
+The location of the building is mapped to a ES geo_point
