@@ -21,7 +21,7 @@ h3. Highlight results
 If a search result is found, the @search@ method will add a @highlight@ entry in the map result.
 That entry contains a @List@ with every highlighted fragments/fields found for each hit.
 
-{code}
+{code:groovy}
 def results = Tweet.search("${params.query}", [highlight: { field 'message' }])
 def highlighted = results.highlight
 
@@ -39,7 +39,7 @@ To determine which fields are to be processed by ElasticSearch, use the @field@ 
 You can call the @field@ setting as many time as you want to add any field.
 
 *Signature*
-{code}
+{code:groovy}
     field <fieldName>[, <fragmentSize>[, <numberOfFragment>]]
 {code}
 
@@ -65,7 +65,7 @@ h3. Highlighting tags
 By default, ElasticSearch will use emphasis tag "@<em>...</em>@" to wrap the matching text.
 You can customize the tags with the @preTags@ and @postTags@ settings.
 
-{code}
+{code:groovy}
 def highlightSettings = {
     field 'message'
     preTags '<myAweSomeTag>'

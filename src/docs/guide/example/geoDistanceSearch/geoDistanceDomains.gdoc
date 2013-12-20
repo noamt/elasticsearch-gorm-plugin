@@ -1,5 +1,5 @@
 
-{code}
+{code:groovy}
 class GeoPoint {
 
     Double lat
@@ -12,7 +12,7 @@ class GeoPoint {
 {code}
 GeoPoint represents the geo coordinates for a building. The field names @lat@ and @lon@ are mandatory.
 
-{code}
+{code:groovy}
 class Building {
 
     String name

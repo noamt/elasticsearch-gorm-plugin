@@ -2,7 +2,7 @@ A filter closure can be passed as a second argument after the search closure to 
 
 h4. Example
 
-{code}
+{code:groovy}
 def result = elasticSearchService.search(
     [indices: Building, types: Building, sort: sortBuilder],
     null as Closure,

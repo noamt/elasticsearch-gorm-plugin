@@ -1,4 +1,4 @@
-{code}
+{code:groovy}
 def searchForBuildings() {
         Closure filter = {
             geo_distance(

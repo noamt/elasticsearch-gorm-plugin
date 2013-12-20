@@ -3,7 +3,7 @@ The format of the search @Closure@ follow the same JSON syntax as the [ElasticSe
 and the [Java Query DSL|http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/query-dsl-queries.html].
 
 *Example*
-{code}
+{code:groovy}
 def result = elasticSearchService.search(searchType:'dfs_query_and_fetch') {
   bool {
       must {
