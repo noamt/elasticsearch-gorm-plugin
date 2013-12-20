@@ -40,11 +40,7 @@ class ElasticsearchGormGrailsPlugin {
     def loadAfter = ['services']
 
     def pluginExcludes = [
-        'grails-app/controllers/test/**',
-        'grails-app/services/test/**',
-        'grails-app/views/elasticSearch/index.gsp',
         'grails-app/domain/test/**',
-        'grails-app/utils/test/**',
         'test/**',
         'src/docs/**'
     ]

@@ -1,6 +1,7 @@
 package org.grails.plugins.elasticsearch
 
 import grails.plugin.spock.IntegrationSpec
+import org.apache.log4j.Logger
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder
 import org.elasticsearch.client.AdminClient
 import org.elasticsearch.client.ClusterAdminClient
@@ -13,6 +14,8 @@ import org.elasticsearch.search.sort.SortOrder
 import test.Building
 import test.GeoPoint
 import test.Product
+import org.elasticsearch.index.query.QueryBuilders
+import test.*
 
 class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
 
@@ -306,6 +309,91 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         searchResults[0].name == product01.name
     }
 
+    void "searching for features of the parent element from the actual element"() {
+
+        given: "parent and child elements"
+
+        def parentParentElement = new Store(name: "Eltern-Elternelement", owner: "Horst")
+        parentParentElement.save(failOnError: true)
+        def parentElement = new Department(name: "Elternelement", numberOfProducts: 4, store: parentParentElement)
+        parentElement.save(failOnError: true)
+        def childElement = new Product(name: "Kindelement", price: 5.00)
+        childElement.save(failOnError: true)
+
+        elasticSearchService.index(parentParentElement, parentElement, childElement)
+        elasticSearchAdminService.refresh()
+
+        when:
+        def result = elasticSearchService.search(
+            QueryBuilders.hasParentQuery("store", QueryBuilders.matchQuery("owner", "Horst")),
+            null as Closure,
+            [indices: Department, types: Department]
+        )
+
+        then:
+        !result.searchResults.empty
+    }
+
+    void "Paging and sorting through search results"() {
+        given: 'a bunch of products'
+        def product
+        10.times {
+            product = new Product(name: "Produkt${it}", price: it).save(failOnError: true, flush: true)
+            elasticSearchService.index(product)
+        }
+        elasticSearchAdminService.refresh()
+
+        when: "a search is performed"
+        def params = [from: 3, size: 2, indices: Product, types: Product, sort: 'name']
+        def query = {
+            wildcard("name": "produkt*")
+        }
+        def result = elasticSearchService.search(query, params)
+
+        then: "the correct result-part is returned"
+        result.total == 10
+        result.searchResults.size() == 2
+        result.searchResults*.name == ['Produkt3', 'Produkt4']
+    }
+
+    void "A search with Uppercase Characters should return appropriate results"() {
+        given: 'a product with an uppercase name'
+        def product = new Product(name: "Großer Kasten", price: 0.85).save(failOnError: true, flush: true)
+        elasticSearchService.index(product)
+        elasticSearchAdminService.refresh()
+
+        when: "a search is performed"
+        def params = [indices: Product, types: Product]
+        def query = {
+            wildcard("name": "Groß*")
+        }
+        def result = elasticSearchService.search(query, params)
+
+        then: "the correct result-part is returned"
+        result.total == 1
+        result.searchResults.size() == 1
+        result.searchResults*.name == ['Großer Kasten']
+    }
+
+    void "A search with lowercase Characters should return appropriate results"() {
+        given: 'a product with a lowercase name'
+        def product = new Product(name: "KLeiner kasten", price: 0.45).save(failOnError: true, flush: true)
+        elasticSearchService.index(product)
+        elasticSearchAdminService.refresh()
+
+        when: "a search is performed"
+        def params = [indices: Product, types: Product]
+        def query = {
+            wildcard("name": "klein*")
+        }
+        def result = elasticSearchService.search(query, params)
+
+        then: "the correct result-part is returned"
+        result.total == 1
+        result.searchResults.size() == 1
+        result.searchResults*.name == ['KLeiner kasten']
+    }
+
     void "a geo distance search finds geo points at varying distances"() {
         def buildings = Building.list()
         buildings.each {
@@ -371,7 +459,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         result.sort.(searchResults[0].id) == [2.542976623368653]
     }
 
-    void "At the start of a test method the index should be empty."() {
+    void "The unindex method should empty the index."() {
         when: 'unindex is called'
         elasticSearchService.unindex([:])
         elasticSearchAdminService.refresh()
@@ -379,4 +467,6 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         then: 'the index should be empty'
         !elasticSearchService.search(null as Closure, [:]).total
     }
+
+
 }
