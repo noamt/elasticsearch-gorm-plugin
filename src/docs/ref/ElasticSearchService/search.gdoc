@@ -36,6 +36,10 @@ def res = elasticSearchService.search(null as Closure, {
 def res = elasticSearchService.search({
     wildcard("name": "*st")
 }, [:])
+
+def hasParentQuery = QueryBuilders.hasParentQuery("store", QueryBuilders.matchQuery("owner", "Horst"))
+def result = elasticSearchService.search(hasParentQuery)
+
 {code}
 
 h2. Description
@@ -47,6 +51,8 @@ def search(Map params, Closure query, Closure filter = null)
 def search(Closure query, Closure filter = null, Map params = [:])
 def search(Closure query, Map params)
 def search(String query, Map params = [:])
+def search(Map params, QueryBuilder query, Closure filter = null)
+def search(QueryBuilder query, Closure filter = null, Map params = [:])
 {code}
 
 h2. Parameters
