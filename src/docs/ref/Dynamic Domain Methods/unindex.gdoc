@@ -6,6 +6,8 @@ Remove specific domain instances from the ElasticSearch indices.
 Internally, the plugin uses the Bulk API of ElasticSearch to perform the delete requests.
 {note}Only domains that are [root-mapped|guide:classMapping] have this method injected.{note}
 
+{note}@unindex([:])@ does not work at the moment{note}
+
 h2. Examples
 
 {code:groovy}

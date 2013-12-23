@@ -7,6 +7,7 @@ h4. History
 ** sadly adds a hibernate dependency for the test domain classes
 ** fixed: Date values are now unmarshalled with correct time zone
 ** known bug: GeoPoints are unmarshalled as null
+** known bug: @unindex([:])@ does not work at the moment
 ** removed dependency for Java 7
 * November 24, 2013
 ** 0.0.2.1 Bugfix release

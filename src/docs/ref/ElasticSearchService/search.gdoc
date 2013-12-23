@@ -48,10 +48,10 @@ h2. Description
 
 {code}
 def search(Map params, Closure query, Closure filter = null)
-def search(Closure query, Closure filter = null, Map params = [:])
-def search(Closure query, Map params)
-def search(String query, Map params = [:])
 def search(Map params, QueryBuilder query, Closure filter = null)
+def search(String query, Map params = [:])
+def search(Closure query, Map params)
+def search(Closure query, Closure filter = null, Map params = [:])
 def search(QueryBuilder query, Closure filter = null, Map params = [:])
 {code}
 
@@ -82,3 +82,122 @@ Return a @Map@ containing:
 * a @highlight@ entry if the @highlighter@ parameter was set.
 * a @sort@ entry if the @sort@ parameter was set. Contains all @sortValue@s of the search. Maps the id of a search hit to the sort values
 ** Example: @[id: [12.34]]@
+
+h2. ElasticSearch Builders
+
+ElasticSearch provides many builders (e.g. QueryBuilders) and builder factories (ending with *Builders, e.g. QueryBuilders).
+The factories provide methods for creating the concrete builders - e.g. QueryBuilders.matchQuery() produces a MatchQueryBuilder, which can be used to create a match query.
+
+Here is a list of builder factories:
+* org.elasticsearch.index.mapper.MapperBuilders
+* org.elasticsearch.index.query.QueryBuilders
+* org.elasticsearch.index.query.FilterBuilders
+* org.elasticsearch.search.sort.SortBuilders
+* org.elasticsearch.search.facet.FacetBuilders
+* org.elasticsearch.cluster.routing.RoutingBuilders
+
+h2. JSON vs. closure syntax comparison for queries and filters
+
+Since there seems to be no obvious rule for the conversion of queries and filters between the JSON syntax and the closure syntax, I just provide some examples.
+
+h3. Range filter
+
+*JSON*
+
+{code:JSON}
+{
+    "range" : {
+        "price" : {
+            "gte" : 1.99,
+            "lte" : 2.3
+        }
+    }
+}
+{code}
+
+*Closure*
+
+{code:groovy}
+{
+    range {
+        "price"(gte: 1.99, lte: 2.3)
+    }
+}
+{code}
+
+h3. Wildcard Query
+
+*JSON*
+
+{code:JSON}
+{
+    "wildcard" : {
+        "name" : "*st"
+    }
+}
+{code}
+
+*Closure*
+
+{code:groovy}
+{
+    wildcard("name": "*st")
+}
+{code}
+
+h3. Bool Query
+
+*JSON*
+
+{code:json}
+{
+    "bool" : {
+        "must" : {
+            "term" : { "firstname" : "kimchy" }
+        }
+    }
+}
+{code}
+
+*Closure*
+
+{code:groovy}
+{
+  bool {
+      must {
+          term(firstname: "kimchy")
+      }
+  }
+}
+{code}
+
+h3. Geo_reference filter
+
+*JSON*
+
+{code:json}
+{
+    "filtered" : {
+        "filter" : {
+            "geo_distance" : {
+                "distance" : "200km",
+                "pin.location" : {
+                    "lat" : 40,
+                    "lon" : -70
+                }
+            }
+        }
+    }
+}
+{code}
+
+*Closure*
+
+{code:groovy}
+{
+    geo_distance(
+        'distance': '200km',
+        'pin.location': [lat: 40, lon: -70]
+    )
+}
+{code}

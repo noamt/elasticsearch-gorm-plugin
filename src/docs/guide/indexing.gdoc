@@ -29,6 +29,9 @@ elasticSearchService.index([MyDomain, MyOtherDomain])
 {code}
 
 h3. Unindex examples
+
+{note}@unindex([:])@ does not work at the moment{note}
+
 {code:groovy}
 // Unindex all searchable instances
 elasticSearchService.unindex()
