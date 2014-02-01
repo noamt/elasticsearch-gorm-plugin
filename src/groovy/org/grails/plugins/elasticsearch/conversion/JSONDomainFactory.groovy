@@ -36,7 +36,7 @@ class JSONDomainFactory {
     def grailsApplication
 	
 	@Delegate
-	private DomainUtil unproxyUtil = DomainUtil.getInstance()
+    private DomainUtil unproxyUtil = DomainUtil.getInstance()
 
     /**
      * The default marshallers, not defined by user
@@ -121,7 +121,7 @@ class JSONDomainFactory {
     }
 
     private GrailsDomainClass getDomainClass(instance) {
-		def instanceClass = unProxyIfNecessary(instance).class
+        def instanceClass = unProxyIfNecessary(instance).class
         grailsApplication.domainClasses.find { it.clazz == instanceClass }
     }
 

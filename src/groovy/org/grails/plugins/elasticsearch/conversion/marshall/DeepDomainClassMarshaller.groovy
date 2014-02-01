@@ -9,7 +9,7 @@ import groovy.lang.Delegate;
 class DeepDomainClassMarshaller extends DefaultMarshaller {
 	
 	@Delegate
-	private DomainUtil unproxyUtil = DomainUtil.getInstance()
+    private DomainUtil unproxyUtil = DomainUtil.getInstance()
 	
     protected doMarshall(instance) {
         def domainClass = getDomainClass(instance)
