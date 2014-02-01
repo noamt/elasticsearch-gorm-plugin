@@ -17,6 +17,7 @@
 package org.grails.plugins.elasticsearch.conversion
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
+import groovy.lang.Delegate;
 
 import java.beans.PropertyEditor
 
@@ -24,6 +25,7 @@ import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsDomainClass
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.grails.plugins.elasticsearch.conversion.marshall.*
+import org.grails.plugins.elasticsearch.util.DomainUtil
 
 /**
  * Marshall objects as JSON.
@@ -32,6 +34,9 @@ class JSONDomainFactory {
 
     def elasticSearchContextHolder
     def grailsApplication
+	
+	@Delegate
+	private DomainUtil unproxyUtil = DomainUtil.getInstance()
 
     /**
      * The default marshallers, not defined by user
@@ -116,7 +121,8 @@ class JSONDomainFactory {
     }
 
     private GrailsDomainClass getDomainClass(instance) {
-        grailsApplication.domainClasses.find { it.clazz == instance.class }
+		def instanceClass = unProxyIfNecessary(instance).class
+        grailsApplication.domainClasses.find { it.clazz == instanceClass }
     }
 
     /**
