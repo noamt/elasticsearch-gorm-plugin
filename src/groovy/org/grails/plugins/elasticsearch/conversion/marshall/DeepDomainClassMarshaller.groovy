@@ -3,8 +3,14 @@ package org.grails.plugins.elasticsearch.conversion.marshall
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsDomainClass
 import org.codehaus.groovy.grails.commons.GrailsDomainClassProperty
+import org.grails.plugins.elasticsearch.util.DomainUtil
+import groovy.lang.Delegate;
 
 class DeepDomainClassMarshaller extends DefaultMarshaller {
+	
+	@Delegate
+    private DomainUtil unproxyUtil = DomainUtil.getInstance()
+	
     protected doMarshall(instance) {
         def domainClass = getDomainClass(instance)
         // don't use instance class directly, instead unwrap from javaassist
@@ -51,7 +57,7 @@ class DeepDomainClassMarshaller extends DefaultMarshaller {
     }
 
     private GrailsDomainClass getDomainClass(instance) {
-        def instanceClass = instance.class
+        def instanceClass = unProxyIfNecessary(instance).class
         grailsApplication.domainClasses.find { it.clazz == instanceClass }
     }
 }
