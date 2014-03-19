@@ -9,6 +9,13 @@ h4. History
 ** known bug: GeoPoints are unmarshalled as null
 ** known bug: @unindex([:])@ does not work at the moment
 ** removed dependency for Java 7
+
+=======
+* February 4, 2014
+** 0.0.2.3 Bugfix release
+* January 19, 2014
+** 0.0.2.2 Bugfix release
+>>>>>>> 23273a418b4b1b3879684b742c67bdc9f22a88f1:src/docs/guide/1.2 History.gdoc
 * November 24, 2013
 ** 0.0.2.1 Bugfix release
 * November 12, 2013
@@ -34,7 +41,7 @@ Get the full and updated list of contributors on the [github|https://github.com/
 h4. License
 
 {quote}
-    Copyright 2002-2013 the original author or authors.
+    Copyright 20013-2014 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

@@ -17,15 +17,18 @@
 
 import grails.util.Environment
 import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.codehaus.groovy.grails.plugins.GrailsPluginManager
 import org.grails.plugins.elasticsearch.AuditEventListener
 import org.grails.plugins.elasticsearch.ClientNodeFactoryBean
 import org.grails.plugins.elasticsearch.ElasticSearchContextHolder
 import org.grails.plugins.elasticsearch.ElasticSearchHelper
-import org.grails.plugins.elasticsearch.conversion.CustomEditorRegistrar
+import org.grails.plugins.elasticsearch.conversion.CustomEditorRegistar
 import org.grails.plugins.elasticsearch.conversion.JSONDomainFactory
 import org.grails.plugins.elasticsearch.conversion.unmarshall.DomainClassUnmarshaller
 import org.grails.plugins.elasticsearch.index.IndexRequestQueue
 import org.grails.plugins.elasticsearch.mapping.SearchableClassMappingConfigurator
+import org.grails.plugins.elasticsearch.unwrap.DomainClassUnWrapperChain
+import org.grails.plugins.elasticsearch.unwrap.HibernateProxyUnWrapper
 import org.grails.plugins.elasticsearch.util.DomainDynamicMethodsUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -34,37 +37,38 @@ class ElasticsearchGormGrailsPlugin {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)
 
-    def version = '0.1.0'
+    def version = '0.0.2.x-SNAPSHOT'
     def grailsVersion = '2.1.0 > *'
 
     def loadAfter = ['services']
 
     def pluginExcludes = [
-        'grails-app/domain/test/**',
-        'test/**',
-        'src/docs/**'
+            'grails-app/controllers/test/**',
+            'grails-app/services/test/**',
+            'grails-app/views/elasticSearch/index.gsp',
+            'grails-app/domain/test/**',
+            'grails-app/utils/test/**',
+            'test/**',
+            'src/docs/**'
     ]
 
     def license = 'APACHE'
 
-    def organization = [name: 'Dating Cafe GmbH', url: 'http://www.datingcafe.de']
+    def organization = [name: '10ne.org', url: 'http://www.10ne.org/']
 
     def developers = [
-        [name: 'Stefan Rother', email: 's.rother@datingcafe.de'],
-        [name: 'Michael Schwartz', email: 'm.schwartz@datingcafe.de'],
-        [name: 'Sven Kiesewetter', email: 's.kiesewetter@datingcafe.de']
+            [name: 'Noam Y. Tenne', email: 'noam@10ne.org']
     ]
 
-    def issueManagement = [system: 'github', url: 'https://github.com/datingcafe/elasticsearch-gorm-plugin']
+    def issueManagement = [system: 'github', url: 'https://github.com/noamt/elasticsearch-gorm-plugin/issues']
 
-    def scm = [url: 'https://github.com/datingcafe/elasticsearch-gorm-plugin']
+    def scm = [url: 'https://github.com/noamt/elasticsearch-gorm-plugin']
 
-    def author = 'Stefan Rother'
-    def authorEmail = 's.rother@datingcafe.de'
-
-    def title = 'ElasticSearch Geospatial Plugin'
-    def description = """An even more alternative Elasticsearch plugin for Grails. This one enables geospatial search requests."""
-    def documentation = 'https://github.com/datingcafe/elasticsearch-gorm-plugin'
+    def author = 'Noam Y. Tenne'
+    def authorEmail = 'noam@10ne.org'
+    def title = 'ElasticSearch GORM Plugin'
+    def description = """An alternative Elasticsearch plugin for Grails. Based on, but unlike the original, this implementation aims to be DB agnostic."""
+    def documentation = 'http://noamt.github.io/elasticsearch-gorm-plugin'
 
     def doWithSpring = {
         def esConfig = getConfiguration(application)
@@ -97,12 +101,21 @@ class ElasticsearchGormGrailsPlugin {
             elasticSearchClient = ref('elasticSearchClient')
             grailsApplication = ref('grailsApplication')
         }
-        customEditorRegistrar(CustomEditorRegistrar) {
+        customEditorRegistrar(CustomEditorRegistar) {
             grailsApplication = ref('grailsApplication')
         }
+
+        def pluginManager = application.parentContext.getBean(GrailsPluginManager.BEAN_NAME)
+        if (((GrailsPluginManager) pluginManager).hasGrailsPlugin('hibernate')) {
+            hibernateProxyUnWrapper(HibernateProxyUnWrapper)
+        }
+
+        domainClassUnWrapperChain(DomainClassUnWrapperChain)
+
         jsonDomainFactory(JSONDomainFactory) {
             elasticSearchContextHolder = ref('elasticSearchContextHolder')
             grailsApplication = ref('grailsApplication')
+            domainClassUnWrapperChain = ref('domainClassUnWrapperChain')
         }
         if (!esConfig.disableAutoIndex) {
             if (!esConfig.datastoreImpl) {
