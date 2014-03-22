@@ -37,7 +37,8 @@ class ElasticSearchMappingFactory {
     static {
         try {
             JODA_TIME_BASE = Class.forName('org.joda.time.ReadableInstant')
-        } catch (ClassNotFoundException e) {}
+        } catch (ClassNotFoundException e) {
+        }
     }
 
     static Map<String, Object> getElasticMapping(SearchableClassMapping scm) {
@@ -68,7 +69,9 @@ class ElasticSearchMappingFactory {
             Map<String, Object> propOptions = [:]
             // Add the custom mapping (searchable static property in domain model)
             propOptions.putAll(scpm.getAttributes())
-            if (!(SUPPORTED_FORMAT.contains(propType))) {
+            if (scpm.isGeoPoint()) {
+                propType = "geo_point"
+            } else if (!(SUPPORTED_FORMAT.contains(propType))) {
                 // Handle embedded persistent collections, ie List<String> listOfThings
                 def referencedPropertyType = grailsProperty.getReferencedPropertyType()
                 if (grailsProperty.isBasicCollectionType()) {

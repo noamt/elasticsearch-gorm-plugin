@@ -1,0 +1,61 @@
+h4. History
+
+* 0.1.0 (December 19, 2013)
+** GeoPoint mapping
+** supports filters (e.g. geo_reference)
+** supports sort builders (e.g. for geo_distance sorting)
+** sadly adds a hibernate dependency for the test domain classes
+** fixed: Date values are now unmarshalled with correct time zone
+** known bug: GeoPoints are unmarshalled as null
+** known bug: @unindex([:])@ does not work at the moment
+** removed dependency for Java 7
+
+=======
+* February 4, 2014
+** 0.0.2.3 Bugfix release
+* January 19, 2014
+** 0.0.2.2 Bugfix release
+>>>>>>> 23273a418b4b1b3879684b742c67bdc9f22a88f1:src/docs/guide/1.2 History.gdoc
+* November 24, 2013
+** 0.0.2.1 Bugfix release
+* November 12, 2013
+** 0.0.2 release
+* November 2, 2013
+** initial 0.0.1 release
+
+h4. Authors and Contributors
+
+Noam Y. Tenne,
+Stefan Rother-Stübs (Dating Cafe),
+Sven Kiesewetter (Dating Cafe),
+Michael Schwartz (Dating Cafe)
+
+h4. Authors and Contributors of the original plugin
+
+Manuarii Stein (doc4web consulting),
+Stephane Maldini (doc4web consulting),
+Serge P. Nekoval
+
+Get the full and updated list of contributors on the [github|https://github.com/datingcafe/elasticsearch-gorm-plugin/] repository.
+
+h4. License
+
+{quote}
+    Copyright 20013-2014 the original author or authors.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+{quote}
+
+h4. Previous work
+
+Graeme Rocher started the first draft which this plugin is based on.

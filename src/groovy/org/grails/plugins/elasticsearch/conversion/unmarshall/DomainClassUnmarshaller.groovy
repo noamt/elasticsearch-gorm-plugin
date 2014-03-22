@@ -16,8 +16,6 @@
 
 package org.grails.plugins.elasticsearch.conversion.unmarshall
 
-import java.beans.PropertyEditor
-
 import org.codehaus.groovy.grails.commons.*
 import org.codehaus.groovy.grails.web.metaclass.BindDynamicMethod
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
@@ -34,6 +32,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.SimpleTypeConverter
 import org.springframework.beans.TypeConverter
 import org.springframework.util.Assert
+
+import java.beans.PropertyEditor
 
 /**
  * Domain class unmarshaller.
@@ -58,7 +58,6 @@ class DomainClassUnmarshaller {
                 LOG.warn("Unknown SearchHit: " + hit.id() + "#" + hit.type())
                 continue
             }
-            String domainClassName = scm.getDomainClass().getFullName()
 
             GrailsDomainClassProperty identifier = scm.getDomainClass().getIdentifier()
             Object id = typeConverter.convertIfNecessary(hit.id(), identifier.getType())
@@ -68,9 +67,11 @@ class DomainClassUnmarshaller {
             Map rebuiltProperties = new HashMap()
             for (Map.Entry<String, Object> entry : hit.getSource().entrySet()) {
                 try {
-                    unmarshallingContext.getUnmarshallingStack().push(entry.getKey())
-                    rebuiltProperties.put(entry.getKey(),
-                            unmarshallProperty(scm.getDomainClass(), entry.getKey(), entry.getValue(), unmarshallingContext))
+                    def key = entry.getKey()
+                    unmarshallingContext.getUnmarshallingStack().push(key)
+
+                    def unmarshalledProperty = unmarshallProperty(scm.getDomainClass(), key, entry.getValue(), unmarshallingContext)
+                    rebuiltProperties[key] = unmarshalledProperty
                     populateCyclicReference(instance, rebuiltProperties, unmarshallingContext)
                 } catch (Throwable t) {
                     LOG.error("Error unmarshalling Class ${scm.getDomainClass().getName()} with id $id", t)
@@ -181,14 +182,14 @@ class DomainClassUnmarshaller {
                 if (!scpm.isComponent()) {
                     // maybe ignore?
                     throw new IllegalStateException("Property " + domainClass.getName() + "." + propertyName +
-                            " is not mapped as [component], but broken search hit found.")
+                        " is not mapped as [component], but broken search hit found.")
                 }
                 GrailsDomainClass nestedDomainClass = ((GrailsDomainClass) grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, (String) data.get("class")))
                 if (domainClass != null) {
                     // Unmarshall 'component' instance.
                     if (!scpm.isComponent()) {
                         throw new IllegalStateException("Object " + data.get("class") +
-                                " found in index, but [" + propertyName + "] is not mapped as component.")
+                            " found in index, but [" + propertyName + "] is not mapped as component.")
                     }
                     parseResult = unmarshallDomain(nestedDomainClass, data.get("id"), data, unmarshallingContext)
                 }
@@ -223,17 +224,17 @@ class DomainClassUnmarshaller {
                 // This is a reference and it MUST be null because it's not a Map.
                 if (propertyValue != null) {
                     throw new IllegalStateException("Found searchable reference which is not a Map: " + domainClass + "." + propertyName +
-                            " = " + propertyValue)
+                        " = " + propertyValue)
                 }
 
                 parseResult = null
             }
         }
+
         if (parseResult != null) {
             return parseResult
-        } else {
-            return propertyValue
         }
+        return propertyValue
     }
 
     private unmarshallReference(GrailsDomainClass domainClass, Map<String, Object> data, DefaultUnmarshallingContext unmarshallingContext) {
@@ -244,7 +245,7 @@ class DomainClassUnmarshaller {
         // A property value is expected to be a map in the form [id:ident]
         Object id = data.id
         GetRequest request = new GetRequest(indexName).operationThreaded(false).type(name)
-                .id(typeConverter.convertIfNecessary(id, String))
+            .id(typeConverter.convertIfNecessary(id, String))
         if (data.containsKey('parent')) {
             request.parent(typeConverter.convertIfNecessary(data.parent, String))
         }

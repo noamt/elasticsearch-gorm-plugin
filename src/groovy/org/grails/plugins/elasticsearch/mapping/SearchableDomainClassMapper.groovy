@@ -16,15 +16,10 @@
 
 package org.grails.plugins.elasticsearch.mapping
 
-import java.lang.reflect.Modifier
-
-import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass
-import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
-import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.codehaus.groovy.grails.commons.GrailsClassUtils
-import org.codehaus.groovy.grails.commons.GrailsDomainClass
-import org.codehaus.groovy.grails.commons.GrailsDomainClassProperty
+import org.codehaus.groovy.grails.commons.*
 import org.springframework.util.Assert
+
+import java.lang.reflect.Modifier
 
 class SearchableDomainClassMapper extends GroovyObjectSupport {
     /**
@@ -114,7 +109,7 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
                 }
 
                 if (superDomainClass.hasProperty(SEARCHABLE_PROPERTY_NAME) &&
-                        superDomainClass.getPropertyValue(SEARCHABLE_PROPERTY_NAME).equals(Boolean.FALSE)) {
+                    superDomainClass.getPropertyValue(SEARCHABLE_PROPERTY_NAME).equals(Boolean.FALSE)) {
 
                     // hierarchy explicitly terminated. Do not browse any more properties.
                     break
@@ -155,7 +150,7 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
         }
 
         // Populate default settings.
-        // Clean out any per-property specs not allowed by 'only','except' rules.
+        // Clean out any per-property specs not allowed by 'only', 'except' rules.
 
         customMappedProperties.keySet().retainAll(mappableProperties)
         mappableProperties.remove(grailsDomainClass.getIdentifier().getName())

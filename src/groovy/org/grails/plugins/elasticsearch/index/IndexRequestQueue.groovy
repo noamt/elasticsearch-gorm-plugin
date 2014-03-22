@@ -160,12 +160,12 @@ class IndexRequestQueue implements InitializingBean {
                 XContentBuilder json = toJSON(value)
 
                 def index = elasticSearchClient.prepareIndex()
-                        .setIndex(scm.indexName)
-                        .setType(scm.elasticTypeName)
-                        .setId(key.id) // TODO : Composite key ?
-                        .setSource(json)
+                    .setIndex(scm.indexName)
+                    .setType(scm.elasticTypeName)
+                    .setId(key.id) // TODO : Composite key ?
+                    .setSource(json)
                 if (parentMapping) {
-                    index = index.setParent(value."${parentMapping.propertyName}".id)
+                    index = index.setParent(value."${parentMapping.propertyName}".id?.toString())
                 }
 
                 bulkRequestBuilder.add(index)
@@ -189,10 +189,10 @@ class IndexRequestQueue implements InitializingBean {
                 LOG.debug("Deleting object from index $scm.indexName and type $scm.elasticTypeName and ID $it.id")
             }
             bulkRequestBuilder.add(
-                    elasticSearchClient.prepareDelete()
-                            .setIndex(scm.indexName)
-                            .setType(scm.elasticTypeName)
-                            .setId(it.id)
+                elasticSearchClient.prepareDelete()
+                    .setIndex(scm.indexName)
+                    .setType(scm.elasticTypeName)
+                    .setId(it.id)
             )
         }
 
