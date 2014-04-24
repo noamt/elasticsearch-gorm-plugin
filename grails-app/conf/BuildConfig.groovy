@@ -33,21 +33,22 @@ grails.project.dependency.resolution = {
             transitive = false
         }
 
-        def datastoreVersion = '1.1.9.RELEASE'
+        def datastoreVersion = '3.0.5.RELEASE'
 
         provided("org.grails:grails-datastore-gorm-plugin-support:$datastoreVersion",
                 "org.grails:grails-datastore-gorm:$datastoreVersion",
                 "org.grails:grails-datastore-core:$datastoreVersion",
                 "org.grails:grails-datastore-web:$datastoreVersion", excludes)
 
-        runtime 'org.elasticsearch:elasticsearch:0.90.5'
-        runtime('org.elasticsearch:elasticsearch-lang-groovy:1.5.0') {
+        runtime 'org.elasticsearch:elasticsearch:1.0.0'
+        runtime('org.elasticsearch:elasticsearch-lang-groovy:2.0.0')  {
             excludes 'junit'
             excludes 'elasticsearch'
             excludes 'groovy-all'
             excludes 'log4j'
         }
         runtime 'com.spatial4j:spatial4j:0.3'
+        test 'com.googlecode.json-simple:json-simple:1.1.1'
     }
 
     plugins {
@@ -55,7 +56,7 @@ grails.project.dependency.resolution = {
             export = false
         }
 
-        test(':spock:0.7', ':hibernate:2.1.4', ':tomcat:2.1.4') {
+        test(':hibernate:3.6.10.11', ':tomcat:2.1.4') {
             export = false
         }
     }

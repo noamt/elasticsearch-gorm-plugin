@@ -1,6 +1,6 @@
 package org.grails.plugins.elasticsearch
 
-import grails.plugin.spock.IntegrationSpec
+import grails.test.spock.IntegrationSpec
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder
 import org.elasticsearch.client.AdminClient
@@ -129,7 +129,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
     }
 
     void 'a date value should be marshalled and de-marshalled correctly'() {
-        def date = new Date()
+        Date date = new Date()
         given:
         def product = new Product(
                 name: 'product with date value',
@@ -202,7 +202,7 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         AdminClient admin = elasticSearchHelper.elasticSearchClient.admin()
         ClusterAdminClient cluster = admin.cluster()
 
-        ClusterStateRequestBuilder indices = cluster.prepareState().setFilterIndices(indexName)
+        ClusterStateRequestBuilder indices = cluster.prepareState().setIndices(indexName)
         ClusterState clusterState = indices.execute().actionGet().state
         IndexMetaData indexMetaData = clusterState.metaData.index(indexName)
         return indexMetaData.mapping(typeName)
@@ -481,6 +481,6 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         then: 'all geo points in the search radius are found'
         List<Building> searchResults = result.searchResults
 
-        result.sort.(searchResults[0].id) == [2.542976623368653]
+        result.sort.(searchResults[0].id) == [2.540134582733153]
     }
 }
