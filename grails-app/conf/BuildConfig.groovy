@@ -1,17 +1,14 @@
 grails.project.work.dir = 'target'
 grails.project.docs.output.dir = 'docs' // for the gh-pages branch
 
-grails.project.dependency.distribution = {
-    remoteRepository(id: 'snapshots-repo', url: 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-snapshots/') {
-        authentication username: System.getProperty('DEPLOYER_USERNAME'), password: System.getProperty('DEPLOYER_PASSWORD')
-    }
-    remoteRepository(id: 'rc-repo', url: 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-rc/') {
-        authentication username: System.getProperty('DEPLOYER_USERNAME'), password: System.getProperty('DEPLOYER_PASSWORD')
-    }
-}
+grails.project.repos.gex.url = "http://dev1.ec2.expansion.mx/nexus/content/repositories/snapshots/"
+
+grails.project.repos."snapshots-repo".url = 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-snapshots/'
+grails.project.repos."rc-repo".url = 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-rc/'
+
+grails.project.dependency.resolver = "maven" // or ivy
 grails.project.dependency.resolution = {
 
-    pom true
     inherits 'global'
     log 'warn'
 
@@ -56,7 +53,7 @@ grails.project.dependency.resolution = {
             export = false
         }
 
-        test(':hibernate:3.6.10.13', '<:tomcat:></:tomcat:>7.0.52.1') {
+        test(':hibernate:3.6.10.13', ':tomcat:7.0.52.1') {
             export = false
         }
     }
