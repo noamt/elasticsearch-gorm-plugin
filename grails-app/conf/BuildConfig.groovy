@@ -45,7 +45,6 @@ grails.project.dependency.resolution = {
             excludes 'log4j'
         }
         runtime 'com.spatial4j:spatial4j:0.3'
-        test 'com.googlecode.json-simple:json-simple:1.1.1'
     }
 
     plugins {
