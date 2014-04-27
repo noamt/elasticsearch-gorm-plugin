@@ -52,11 +52,11 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        build ':release:2.2.1', ':rest-client-builder:1.0.3', {
+        build ':release:3.0.1', ':rest-client-builder:2.0.1', {
             export = false
         }
 
-        test(':hibernate:3.6.10.11', ':tomcat:2.1.4') {
+        test(':hibernate:3.6.10.13', '<:tomcat:></:tomcat:>7.0.52.1') {
             export = false
         }
     }
