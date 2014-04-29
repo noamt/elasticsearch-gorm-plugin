@@ -1,17 +1,14 @@
 grails.project.work.dir = 'target'
 grails.project.docs.output.dir = 'docs' // for the gh-pages branch
 
-grails.project.dependency.distribution = {
-    remoteRepository(id: 'snapshots-repo', url: 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-snapshots/') {
-        authentication username: System.getProperty('DEPLOYER_USERNAME'), password: System.getProperty('DEPLOYER_PASSWORD')
-    }
-    remoteRepository(id: 'rc-repo', url: 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-rc/') {
-        authentication username: System.getProperty('DEPLOYER_USERNAME'), password: System.getProperty('DEPLOYER_PASSWORD')
-    }
-}
+grails.project.repos.gex.url = "http://dev1.ec2.expansion.mx/nexus/content/repositories/snapshots/"
+
+grails.project.repos."snapshots-repo".url = 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-snapshots/'
+grails.project.repos."rc-repo".url = 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-rc/'
+
+grails.project.dependency.resolver = "maven" // or ivy
 grails.project.dependency.resolution = {
 
-    pom true
     inherits 'global'
     log 'warn'
 
@@ -33,15 +30,15 @@ grails.project.dependency.resolution = {
             transitive = false
         }
 
-        def datastoreVersion = '1.1.9.RELEASE'
+        def datastoreVersion = '3.0.6.RELEASE'
 
         provided("org.grails:grails-datastore-gorm-plugin-support:$datastoreVersion",
                 "org.grails:grails-datastore-gorm:$datastoreVersion",
                 "org.grails:grails-datastore-core:$datastoreVersion",
                 "org.grails:grails-datastore-web:$datastoreVersion", excludes)
 
-        runtime 'org.elasticsearch:elasticsearch:0.90.5'
-        runtime('org.elasticsearch:elasticsearch-lang-groovy:1.5.0') {
+        runtime 'org.elasticsearch:elasticsearch:1.1.0'
+        runtime('org.elasticsearch:elasticsearch-lang-groovy:2.0.0')  {
             excludes 'junit'
             excludes 'elasticsearch'
             excludes 'groovy-all'
@@ -51,11 +48,11 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        build ':release:2.2.1', ':rest-client-builder:1.0.3', {
+        build ':release:3.0.1', ':rest-client-builder:2.0.1', {
             export = false
         }
 
-        test(':spock:0.7', ':hibernate:2.1.4', ':tomcat:2.1.4') {
+        test(':hibernate:3.6.10.13', ':tomcat:7.0.52.1') {
             export = false
         }
     }
