@@ -30,7 +30,7 @@ grails.project.dependency.resolution = {
             transitive = false
         }
 
-        def datastoreVersion = '3.0.5.RELEASE'
+        def datastoreVersion = '3.0.6.RELEASE'
 
         provided("org.grails:grails-datastore-gorm-plugin-support:$datastoreVersion",
                 "org.grails:grails-datastore-gorm:$datastoreVersion",

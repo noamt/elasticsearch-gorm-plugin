@@ -225,6 +225,8 @@ class DomainClassUnmarshaller {
                 }
 
                 parseResult = null
+            } else if (scpm.grailsProperty.type == Date && null != propertyValue) {
+                parseResult = propertyValue.replaceAll('Z$', '+0000')
             }
         }
 
