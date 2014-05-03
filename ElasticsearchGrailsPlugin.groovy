@@ -40,7 +40,7 @@ class ElasticsearchGrailsPlugin {
     def version = '0.0.2.x-SNAPSHOT'
     def grailsVersion = '2.1.0 > *'
 
-    def loadAfter = ['services']
+    def loadAfter = ['services', 'mongodb']
 
     def pluginExcludes = [
             'grails-app/controllers/test/**',
