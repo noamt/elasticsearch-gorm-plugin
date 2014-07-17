@@ -17,7 +17,6 @@
 
 import grails.util.Environment
 import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.codehaus.groovy.grails.plugins.GrailsPluginManager
 import org.grails.plugins.elasticsearch.AuditEventListener
 import org.grails.plugins.elasticsearch.ClientNodeFactoryBean
 import org.grails.plugins.elasticsearch.ElasticSearchContextHolder
@@ -87,7 +86,6 @@ class ElasticsearchGrailsPlugin {
             elasticSearchContextHolder = ref('elasticSearchContextHolder')
             elasticSearchClient = ref('elasticSearchClient')
             jsonDomainFactory = ref('jsonDomainFactory')
-            persistenceInterceptor = ref('persistenceInterceptor')
         }
         searchableClassMappingConfigurator(SearchableClassMappingConfigurator) { bean ->
             elasticSearchContext = ref('elasticSearchContextHolder')
