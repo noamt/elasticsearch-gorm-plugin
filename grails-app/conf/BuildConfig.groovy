@@ -9,6 +9,7 @@ grails.project.dependency.distribution = {
         authentication username: System.getProperty('DEPLOYER_USERNAME'), password: System.getProperty('DEPLOYER_PASSWORD')
     }
 }
+
 grails.project.dependency.resolver = 'maven' // or ivy
 grails.project.dependency.resolution = {
 
@@ -33,14 +34,16 @@ grails.project.dependency.resolution = {
             transitive = false
         }
 
-        def datastoreVersion = '3.1.1.RELEASE'
+        def datastoreVersion = '3.1.4.RELEASE'
 
         provided("org.grails:grails-datastore-gorm-plugin-support:$datastoreVersion",
                 "org.grails:grails-datastore-gorm:$datastoreVersion",
                 "org.grails:grails-datastore-core:$datastoreVersion",
                 "org.grails:grails-datastore-web:$datastoreVersion", excludes)
 
-        runtime 'org.elasticsearch:elasticsearch-groovy:1.4.4'
+        runtime(group: 'org.elasticsearch', name: 'elasticsearch-groovy', version: '1.5.0', classifier: 'grails') {
+            exclude 'groovy-all'
+        }
         runtime 'com.spatial4j:spatial4j:0.4.1'
 
         compile 'com.vividsolutions:jts:1.13'
@@ -49,11 +52,11 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        build ':release:3.0.1', ':rest-client-builder:2.0.3', {
+        build ":release:3.1.1", ":rest-client-builder:2.1.1", {
             export = false
         }
 
-        test(':hibernate:3.6.10.16', ':tomcat:7.0.54') {
+        test(':hibernate:3.6.10.19', ':tomcat:7.0.55.2') {
             export = false
         }
     }
