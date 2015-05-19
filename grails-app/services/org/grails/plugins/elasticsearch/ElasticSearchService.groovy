@@ -18,6 +18,7 @@ package org.grails.plugins.elasticsearch
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsApplicationAware
 import org.elasticsearch.action.count.CountRequest
+import org.elasticsearch.action.mlt.MoreLikeThisRequest
 import org.elasticsearch.action.search.SearchRequest
 import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.action.support.QuerySourceBuilder
@@ -642,7 +643,15 @@ class ElasticSearchService implements GrailsApplicationAware {
 		return request
 	}
 	
-	def moreLikeThis(GrailsDomainClass domain, String id, params){
+	def moreLikeThis(Class domainClass, String id, params){
+		def domain
+		for (d in grailsApplication.domainClasses) {
+			if (d.clazz.equals(domainClass)) {
+				domain = d
+				break
+			}
+		}
+
 		SearchableClassMapping scm = elasticSearchContextHolder.getMappingContext(domain)
 		def indexAndType = [indices: scm.queryingIndex, types: domain.clazz]
 		params = params + indexAndType
