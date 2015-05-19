@@ -179,6 +179,15 @@ class DomainDynamicMethodsUtils {
             domain.metaClass.unindex << {
                 elasticSearchService.unindex(delegate)
             }
+			
+			// more like this
+			domain.metaClass.'static'.moreLikeThis << { String id, Map params = [:] ->
+				elasticSearchService.moreLikeThis(id, params + indexAndType)
+			}
+			
+			domain.metaClass.'static'.moreLikeThis << { String query, String id, Closure f, Map params = [:] ->
+				elasticSearchService.moreLikeThis(query, id, f, params + indexAndType)
+			}
         }
     }
 
