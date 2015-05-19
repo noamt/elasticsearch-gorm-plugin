@@ -629,9 +629,16 @@ class ElasticSearchService implements GrailsApplicationAware {
 		MoreLikeThisRequest request = new MoreLikeThisRequest()
 		request.searchType SearchType.DFS_QUERY_THEN_FETCH
 		request.searchSource source
-		request.id id
-		request.minDocFreq 1
-		request.minTermFreq 1
+		
+		if(id){
+			request.id id
+		}
+		if (params.minDocFreq) {
+			request.minDocFreq = params.minDocFreq
+		}
+		if (params.minTermFreq) {
+			request.minTermFreq = params.minTermFreq
+		}
 		return request
 	}
 	
