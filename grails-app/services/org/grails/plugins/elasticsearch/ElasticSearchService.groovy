@@ -644,13 +644,7 @@ class ElasticSearchService implements GrailsApplicationAware {
 	}
 	
 	def moreLikeThis(Class domainClass, String id, params){
-		def domain
-		for (d in grailsApplication.domainClasses) {
-			if (d.clazz.equals(domainClass)) {
-				domain = d
-				break
-			}
-		}
+		def domain = grailsApplication.getDomainClass(domainClass?.name)
 
 		SearchableClassMapping scm = elasticSearchContextHolder.getMappingContext(domain)
 		def indexAndType = [indices: scm.queryingIndex, types: domain.clazz]
