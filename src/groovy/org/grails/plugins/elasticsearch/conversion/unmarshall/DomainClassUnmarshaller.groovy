@@ -49,6 +49,15 @@ class DomainClassUnmarshaller {
     private GrailsApplication grailsApplication
     private Client elasticSearchClient
 
+    private static Class JODA_TIME_BASE
+
+    static {
+        try {
+            JODA_TIME_BASE = Class.forName('org.joda.time.ReadableInstant')
+        } catch (ClassNotFoundException e) {
+        }
+    }
+
     Collection buildResults(SearchHits hits) {
         DefaultUnmarshallingContext unmarshallingContext = new DefaultUnmarshallingContext()
         TypeConverter typeConverter = new SimpleTypeConverter()
@@ -241,7 +250,7 @@ class DomainClassUnmarshaller {
                 }
 
                 parseResult = null
-            } else if (scpm.grailsProperty.type == Date && null != propertyValue) {
+            } else if (isDateType(scpm.grailsProperty.type) && null != propertyValue) {
                 parseResult = XContentBuilder.defaultDatePrinter.parseDateTime(propertyValue).toDate()
             }
         }
@@ -304,4 +313,9 @@ class DomainClassUnmarshaller {
     void setElasticSearchClient(Client elasticSearchClient) {
         this.elasticSearchClient = elasticSearchClient
     }
+
+    private static boolean isDateType(Class type) {
+        (JODA_TIME_BASE != null && JODA_TIME_BASE.isAssignableFrom(type)) || Date.isAssignableFrom(type)
+    }
+
 }
