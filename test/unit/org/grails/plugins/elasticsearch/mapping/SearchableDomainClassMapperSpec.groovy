@@ -28,6 +28,25 @@ class SearchableDomainClassMapperSpec extends Specification {
         def locationMapping = classMapping.propertiesMapping.find { it.propertyName == 'location' }
         locationMapping.isGeoPoint()
     }
+    
+    void 'a domain class with mapping attachment: true is mapped as attachment'() {
+        def config = [:] as ConfigObject
+        def grailsApplication = [:] as GrailsApplication
+
+        given: 'a mapper for File'
+
+        def clazz = new DefaultGrailsDomainClass(test.File)
+        SearchableDomainClassMapper mapper = new SearchableDomainClassMapper(grailsApplication, clazz, config)
+
+        when: 'the mapping is built'
+        def classMapping = mapper.buildClassMapping()
+
+        then: 'the attachment property is mapped as attachment'
+        classMapping.domainClass == clazz
+        classMapping.elasticTypeName == 'file'
+        def locationMapping = classMapping.propertiesMapping.find { it.propertyName == 'attachment' }
+        locationMapping.isAttachment()
+    }
 
     void 'the correct mapping is passed to the ES server'() {
         def config = [:] as ConfigObject

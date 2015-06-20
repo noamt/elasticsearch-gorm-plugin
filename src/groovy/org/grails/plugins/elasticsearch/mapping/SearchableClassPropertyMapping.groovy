@@ -26,7 +26,7 @@ class SearchableClassPropertyMapping {
     private static final Set<String> SEARCHABLE_MAPPING_OPTIONS = ['boost', 'index', 'analyzer']
     private static final Set<String> SEARCHABLE_SPECIAL_MAPPING_OPTIONS =
             ['component', 'converter', 'reference', 'excludeFromAll', 'maxDepth', 'multi_field', 'parent', 'geoPoint',
-             'alias', 'dynamic']
+             'alias', 'dynamic', 'attachment']
 
     /** Grails attributes of this property */
     private GrailsDomainClassProperty grailsProperty
@@ -58,6 +58,10 @@ class SearchableClassPropertyMapping {
                 throw new IllegalArgumentException("Invalid option $key found in searchable mapping.")
             }
         }
+    }
+    
+    boolean isAttachment() {
+        specialMappingAttributes.attachment != null
     }
 
     /**

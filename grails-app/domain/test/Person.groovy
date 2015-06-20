@@ -7,6 +7,7 @@ class Person {
 
     String firstName
     String lastName
+    String password
 
     List<String> nickNames
 
@@ -16,8 +17,16 @@ class Person {
 
     static transients = ['fullName']
     static hasMany = [nickNames:String]
+    
+    static mapping = {
+        autoImport(false)
+    }
 
     static searchable = {
         root false
+    }
+
+    static constraints = {
+        password nullable: true
     }
 }

@@ -74,6 +74,9 @@ hibernateDatastore | The name of the Hibernate datastore bean.
 When using then plugin to construct a local node, the default Elasticsearch configuration is used by default.
 If you use a modified Elasticsearch configuration, you can use this property to specify the location of the file (as an application resource).
 
+* @elasticSearch.bootstrap.transportSettings.file@
+When choosing transport mode this configuration will be used to set up the TransportClient settings (used by some cloud providers).
+
 * @elasticSearch.client.transport.sniff@
 Only usable in with a transport client.
 Allows to sniff the rest of the cluster, and add those into its list of machines to use.
@@ -88,8 +91,8 @@ Note : future version of the plugin may change how formats are manipulated.
 
 * @elasticSearch.defaultExcludedProperties@
 List of domain class properties to automatically ignore (will not be indexed) if their name match one of those.
-This will only apply to default-mapped domain class, with the static @searchable@ property set to "true", and will
-not be considered when using closure mapping.
+This will apply to both the default-mapped domain class, with the static @searchable@ property set to "true", and when using closure mapping.
+To override this setting on a specific class, it can be added to the @only@ property of the @searchable@ closure.
 
 * @elasticSearch.disableAutoIndex@
 A boolean determining if the plugin should reflect any database save/update/delete automatically on the indices.

@@ -3,7 +3,7 @@ package test
 class Building {
 
     String name
-	Date date = new Date()
+    Date date = new Date()
     GeoPoint location
 
     static constraints = {
@@ -12,6 +12,6 @@ class Building {
 
     static searchable = {
         location geoPoint: true, component: true
-		date alias: "@timestamp"
+        date alias: "@timestamp"
     }
 }

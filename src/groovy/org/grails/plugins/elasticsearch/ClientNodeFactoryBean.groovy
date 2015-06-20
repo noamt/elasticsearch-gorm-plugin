@@ -67,6 +67,12 @@ class ClientNodeFactoryBean implements FactoryBean {
         switch (clientMode) {
             case 'transport':
                 def transportSettings = ImmutableSettings.settingsBuilder()
+
+                def transportSettingsFile = elasticSearchContextHolder.config.bootstrap.transportSettings.file
+                if(transportSettingsFile) {
+                    def resource = new PathMatchingResourcePatternResolver().getResource(transportSettingsFile)
+                    transportSettings.loadFromUrl(resource.URL)
+                }
                 // Use the "sniff" feature of transport client ?
                 if (elasticSearchContextHolder.config.client.transport.sniff) {
                     transportSettings.put("client.transport.sniff", true)
@@ -113,6 +119,13 @@ class ClientNodeFactoryBean implements FactoryBean {
                 if(pluginsDirectory){
                     nb.settings().put('path.plugins', pluginsDirectory as String)
                 }
+
+                // Path to the config folder of ES
+                def confDirectory = elasticSearchContextHolder.config.path.conf
+                if(confDirectory){
+                    nb.settings().put('path.conf', confDirectory as String)
+                }
+
                 nb.local(true)
                 break
 

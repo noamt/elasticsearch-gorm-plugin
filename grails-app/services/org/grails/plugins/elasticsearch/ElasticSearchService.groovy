@@ -481,6 +481,14 @@ class ElasticSearchService implements GrailsApplicationAware {
                 result.sort = sortValues
             }
 
+            def aggregations = response.getAggregations()
+            if (aggregations) {
+                def aggregationsAsMap = aggregations.asMap()
+                if (aggregationsAsMap) {
+                    result.aggregations = aggregationsAsMap
+                }
+            }
+
             result
         }
     }

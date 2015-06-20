@@ -16,6 +16,8 @@
 
 package org.grails.plugins.elasticsearch.mapping
 
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.commons.*
 import org.springframework.util.Assert
 
@@ -36,6 +38,8 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
     private except
 
     private ConfigObject esConfig
+
+    private Log log = LogFactory.getLog(SearchableDomainClassMapper)
 
     /**
      * Create closure-based mapping configurator.
@@ -121,6 +125,8 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
 
         // !!!! Allow explicit identifier indexing ONLY when defined with custom attributes.
         mappableProperties.add(grailsDomainClass.getIdentifier().getName())
+
+        log.debug("Identified the following properties as candidates for mapping: ${mappableProperties}")
 
         // Process inherited mappings in reverse order.
         for (GrailsDomainClass domainClass : superMappings) {
@@ -210,20 +216,32 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
         Boolean alwaysInheritProperties = (Boolean) esConfig.get("alwaysInheritProperties")
         boolean inherit = alwaysInheritProperties != null && alwaysInheritProperties
 
+        def defaultExcludedProperties = esConfig.get("defaultExcludedProperties")
+        if(defaultExcludedProperties instanceof Collection) {
+            log.debug("Removing default excluded properties ${defaultExcludedProperties} from mappable properties for class ${domainClass.clazz} : ${mappableProperties}")
+            mappableProperties.removeAll(defaultExcludedProperties)
+        }
+
         // Remove all properties that may be in the "except" rule
         if (!propsExcept.isEmpty()) {
+            log.debug("'except' found on class ${domainClass.clazz}. Removing properties from mappings : ${propsExcept}")
             mappableProperties.removeAll(propsExcept)
         }
         // Only keep the properties specified in the "only" rule
         if (!propsOnly.isEmpty()) {
+            log.debug("'only' found on class ${domainClass.clazz}.")
             // If we have inherited properties, we keep them nonetheless
             if (inherit) {
+                log.debug("'only' found on class ${domainClass.clazz}. Keeping inherited properties : ${inheritedProperties}")
                 mappableProperties.retainAll(inheritedProperties)
             } else {
                 mappableProperties.clear()
             }
+            log.debug("Including properties defined in 'only' : ${propsOnly}")
             mappableProperties.addAll(propsOnly)
         }
+
+        log.debug("Properties to map for class ${domainClass.clazz} are: ${mappableProperties}")
     }
 
     /**

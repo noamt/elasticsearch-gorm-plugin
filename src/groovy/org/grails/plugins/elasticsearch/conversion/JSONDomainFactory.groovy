@@ -82,7 +82,7 @@ class JSONDomainFactory {
                             marshaller = new PropertyEditorMarshaller(propertyEditorClass: converter)
                         }
                     }
-                } else if(propertyMapping?.isDynamic()){
+                } else if (propertyMapping?.isDynamic()) {
                     marshaller = new DynamicValueMarshaller()
                 } else if (propertyMapping?.reference) {
                     def refClass = propertyMapping.getBestGuessReferenceType()
@@ -151,10 +151,10 @@ class JSONDomainFactory {
             marshallingContext.lastParentPropertyName = scpm.propertyName
             def res = delegateMarshalling(instance."${scpm.propertyName}", marshallingContext)
             json.field(scpm.propertyName, res)
-			//add the alias
-			if(scpm.getAlias()){
-				json.field(scpm.getAlias(), res)
-			}
+            // add the alias
+            if (scpm.getAlias()) {
+                json.field(scpm.getAlias(), res)
+            }
         }
         marshallingContext.pop()
         json.endObject()
