@@ -23,6 +23,7 @@ import org.elasticsearch.search.sort.FieldSortBuilder
 import org.elasticsearch.search.sort.SortBuilders
 import org.elasticsearch.search.sort.SortOrder
 import test.*
+import test.moreLikeThis.Question
 
 class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
 
@@ -645,7 +646,38 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         findFailures().size() == 0
         elasticSearchService.countHits('Ship\\-') == 1858
     }
+	
+	void 'A more like this search should return appropriate results'() {
+		given: 'mulitple questions with similar content'
+		def question0 = new Question(title: 'Is Basmatti Rice of Punjab really the best?', description: 'not here').save(failOnError: true, flush: true)
+		def question1 = new Question(title: 'Are Kinno of Sargodha quite unique?', description: 'testing testing').save(failOnError: true, flush: true)
+		def question2 = new Question(title: 'Are Mangoes especiallity of Multan or Sargodha?', description: 'testing').save(failOnError: true, flush: true)
+		question0.save(failOnError: true)
+		question1.save(failOnError: true)
+		question2.save(failOnError: true)
+		
+		elasticSearchService.index(question0, question1, question2)
+		elasticSearchAdminService.refresh()
 
+		when: 'a search is performed with elasticSearchService'
+		def params = [indices: Question, types: Question, minDocFreq: 1, minTermFreq: 2 ]
+		def result = elasticSearchService.moreLikeThis(Question, question1.id as String, params)
+		
+		and: 'a search is performed with Domain Class'
+		def result2 = Question.moreLikeThis(question1.id as String, params)
+		
+		then: 'the correct result-part is returned for case#1'
+		result.total == 1
+		List<Question> searchResults = result.searchResults
+        searchResults[0].title == question2.title
+		
+		and:'the correct result-part is returned for case#2'
+		result2.total == 1
+		List<Question> searchResults2 = result2.searchResults
+		searchResults2[0].title == question2.title
+	}
+
+	
     private def findFailures() {
         def domainClass = new DefaultGrailsDomainClass(Spaceship)
         def failures=[]

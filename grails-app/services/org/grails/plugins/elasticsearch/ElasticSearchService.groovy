@@ -594,18 +594,6 @@ class ElasticSearchService implements GrailsApplicationAware {
 				.size(params.size ? params.size as int : 60)
 				.explain(params.explain ?: true).minScore(params.min_score ?: 0)
 
-		if (params.sort) {
-			def sorters = (params.sort instanceof Collection) ? params.sort : [params.sort]
-
-			sorters.each {
-				if (it instanceof SortBuilder) {
-					source.sort(it as SortBuilder)
-				} else {
-					source.sort(it, SortOrder.valueOf(params.order?.toUpperCase() ?: "ASC"))
-				}
-			}
-		}
-
 		// Handle the query, can either be a closure or a string
 		if (query) {
 			setQueryInSource(source, query, params)
@@ -613,17 +601,6 @@ class ElasticSearchService implements GrailsApplicationAware {
 
 		if (filter) {
 			setFilterInSource(source, filter, params)
-		}
-
-		// Handle highlighting
-		if (params.highlight) {
-			def highlighter = new HighlightBuilder()
-			// params.highlight is expected to provide a Closure.
-			def highlightBuilder = params.highlight
-			highlightBuilder.delegate = highlighter
-			highlightBuilder.resolveStrategy = Closure.DELEGATE_FIRST
-			highlightBuilder.call()
-			source.highlight highlighter
 		}
 
 		source.explain(false)
@@ -636,18 +613,26 @@ class ElasticSearchService implements GrailsApplicationAware {
 			request.id id
 		}
 		if (params.minDocFreq) {
+			// Sets the frequency at which words will be ignored which do not occur in at least this many docs.
 			request.minDocFreq = params.minDocFreq
 		}
-		if (params.minTermFreq) {
+		if (params.minTermFreq) { 
+			// The frequency below which terms will be ignored in the source doc.
 			request.minTermFreq = params.minTermFreq
+		}
+		if (params.maxDocFreq) {
+			// Set the maximum frequency in which words may still appear.
+			request.maxDocFreq = params.maxDocFreq
 		}
 		return request
 	}
 	
 	def moreLikeThis(Class domainClass, String id, params){
+		
 		GrailsDomainClass domain = grailsApplication.getDomainClass(domainClass?.name)
-
+		
 		SearchableClassMapping scm = elasticSearchContextHolder.getMappingContext(domain)
+		
 		def indexAndType = [indices: scm.queryingIndex, types: domain.clazz]
 		params = params + indexAndType
 		MoreLikeThisRequest request = buildMoreLikeThisRequest(null, id, null, params)
@@ -655,6 +640,18 @@ class ElasticSearchService implements GrailsApplicationAware {
 		
 	}
 	
+	def moreLikeThis(Class domainClass, String id, filter, params){
+		
+		GrailsDomainClass domain = grailsApplication.getDomainClass(domainClass?.name)
+		
+		SearchableClassMapping scm = elasticSearchContextHolder.getMappingContext(domain)
+
+		def indexAndType = [indices: scm.queryingIndex, types: domain.clazz]
+		params = params + indexAndType
+		MoreLikeThisRequest request = buildMoreLikeThisRequest(null, id, filter, params)
+		moreLikeThis(request, params)
+		
+	}
 	/**
 	 * More Like This search with an Id.
 	 *
@@ -684,10 +681,10 @@ class ElasticSearchService implements GrailsApplicationAware {
 		resolveMLTIndicesAndTypes(req, params)
 		
 		elasticSearchHelper.withElasticSearch { Client client ->
-			LOG.debug 'Executing search request.'
+			LOG.debug 'Executing moreLikeThis search request.'
 			
 			def response = client.moreLikeThis(req).actionGet()
-			LOG.debug 'Completed search request.'
+			LOG.debug 'Completed moreLikeThis search request.'
 			def searchHits = response.getHits()
 			def result = [:]
 			result.total = searchHits.totalHits()
@@ -804,7 +801,6 @@ class ElasticSearchService implements GrailsApplicationAware {
 				}
 			}
 			request.searchTypes(types as String[])
-			//request.type types[0]
 		}
 		request.index request.searchIndices[0]
 		request.type request.searchTypes[0]
