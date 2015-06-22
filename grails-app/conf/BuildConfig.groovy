@@ -1,14 +1,17 @@
 grails.project.work.dir = 'target'
 grails.project.docs.output.dir = 'docs' // for the gh-pages branch
 
-grails.project.dependency.distribution = {
-    remoteRepository(id: 'snapshots-repo', url: 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-snapshots/') {
-        authentication username: System.getProperty('DEPLOYER_USERNAME'), password: System.getProperty('DEPLOYER_PASSWORD')
-    }
-    remoteRepository(id: 'rc-repo', url: 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-rc/') {
-        authentication username: System.getProperty('DEPLOYER_USERNAME'), password: System.getProperty('DEPLOYER_PASSWORD')
-    }
-}
+//grails.project.dependency.distribution = {
+////    remoteRepository(id: 'snapshots-repo', url: 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-snapshots/') {
+////        authentication username: System.getProperty('DEPLOYER_USERNAME'), password: System.getProperty('DEPLOYER_PASSWORD')
+////    }
+////    remoteRepository(id: 'rc-repo', url: 'http://noams.artifactoryonline.com/noams/grails-elasticsearch-plugin-rc/') {
+////        authentication username: System.getProperty('DEPLOYER_USERNAME'), password: System.getProperty('DEPLOYER_PASSWORD')
+////    }
+//    remoteRepository(id: 'stainless-repo', url: 'http://frink.stainlesscode.com:8081/artifactory/libs-snapshot-local') {
+//        authentication username: System.getProperty('DEPLOYER_USERNAME'), password: System.getProperty('DEPLOYER_PASSWORD')
+//    }
+//}
 grails.project.dependency.resolver = 'maven' // or ivy
 grails.project.dependency.resolution = {
 
@@ -49,6 +52,7 @@ grails.project.dependency.resolution = {
         compile 'com.vividsolutions:jts:1.13'
 
         test 'com.googlecode.json-simple:json-simple:1.1.1'
+        test 'org.jadira.usertype:usertype.jodatime:1.9'
     }
 
     plugins {
@@ -59,5 +63,7 @@ grails.project.dependency.resolution = {
         test(':hibernate:3.6.10.16', ':tomcat:7.0.54') {
             export = false
         }
+
+        test ":joda-time:1.5"
     }
 }
