@@ -16,8 +16,10 @@
 package org.grails.plugins.elasticsearch
 
 import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.codehaus.groovy.grails.commons.GrailsDomainClass
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsApplicationAware
 import org.elasticsearch.action.count.CountRequest
+import org.elasticsearch.action.mlt.MoreLikeThisRequest
 import org.elasticsearch.action.search.SearchRequest
 import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.action.support.QuerySourceBuilder
@@ -584,4 +586,231 @@ class ElasticSearchService implements GrailsApplicationAware {
             request.types(types as String[])
         }
     }
+	
+	/**
+	 * Builds a MoreLikeThis request
+	 *
+	 * @param params The query parameters
+	 * @param query The search query, whether a String, a Closure or a QueryBuilder
+	 * @param filter The search filter, whether a Closure or a FilterBuilder
+	 * @return The SearchRequest instance
+	 */
+	private MoreLikeThisRequest buildMoreLikeThisRequest(query, String id, filter, Map params) {
+		SearchSourceBuilder source = new SearchSourceBuilder()
+
+		source.from(params.from ? params.from as int : 0)
+				.size(params.size ? params.size as int : 60)
+				.explain(params.explain ?: true).minScore(params.min_score ?: 0)
+
+		// Handle the query, can either be a closure or a string
+		if (query) {
+			setQueryInSource(source, query, params)
+		}
+
+		if (filter) {
+			setFilterInSource(source, filter, params)
+		}
+
+		source.explain(false)
+
+		MoreLikeThisRequest request = new MoreLikeThisRequest()
+		request.searchType SearchType.DFS_QUERY_THEN_FETCH
+		request.searchSource source
+		
+		if(id){
+			request.id id
+		}
+		if (params.minDocFreq) {
+			// Sets the frequency at which words will be ignored which do not occur in at least this many docs.
+			request.minDocFreq = params.minDocFreq
+		}
+		if (params.minTermFreq) { 
+			// The frequency below which terms will be ignored in the source doc.
+			request.minTermFreq = params.minTermFreq
+		}
+		if (params.maxDocFreq) {
+			// Set the maximum frequency in which words may still appear.
+			request.maxDocFreq = params.maxDocFreq
+		}
+		return request
+	}
+	
+	def moreLikeThis(Class domainClass, String id, params){
+		
+		GrailsDomainClass domain = grailsApplication.getDomainClass(domainClass?.name)
+		
+		SearchableClassMapping scm = elasticSearchContextHolder.getMappingContext(domain)
+		
+		def indexAndType = [indices: scm.queryingIndex, types: domain.clazz]
+		params = params + indexAndType
+		MoreLikeThisRequest request = buildMoreLikeThisRequest(null, id, null, params)
+		moreLikeThis(request, params)
+		
+	}
+	
+	def moreLikeThis(Class domainClass, String id, filter, params){
+		
+		GrailsDomainClass domain = grailsApplication.getDomainClass(domainClass?.name)
+		
+		SearchableClassMapping scm = elasticSearchContextHolder.getMappingContext(domain)
+
+		def indexAndType = [indices: scm.queryingIndex, types: domain.clazz]
+		params = params + indexAndType
+		MoreLikeThisRequest request = buildMoreLikeThisRequest(null, id, filter, params)
+		moreLikeThis(request, params)
+		
+	}
+	/**
+	 * More Like This search with an Id.
+	 *
+	 * @param id The id of document. Matching documents will be found against the id
+	 * @param params Search parameters
+	 * @return A Map containing the search results
+	 */
+	def moreLikeThis(String id, Map params){
+		MoreLikeThisRequest request = buildMoreLikeThisRequest(null, id, null, params)
+		moreLikeThis(request, params)
+	}
+	
+	def moreLikeThis(String query, id, filter, Map params){
+		MoreLikeThisRequest request = buildMoreLikeThisRequest(query, id, filter, params)
+		moreLikeThis(request, params)
+	}
+	
+	
+	/**
+	 * Computes a moreLikeThis search request and builds the results
+	 *
+	 * @param request The MoreLikeThisRequest to compute
+	 * @param params Search parameters
+	 * @return A Map containing the search results
+	 */
+	def moreLikeThis(MoreLikeThisRequest req, Map params) {
+		resolveMLTIndicesAndTypes(req, params)
+		
+		elasticSearchHelper.withElasticSearch { Client client ->
+			LOG.debug 'Executing moreLikeThis search request.'
+			
+			def response = client.moreLikeThis(req).actionGet()
+			LOG.debug 'Completed moreLikeThis search request.'
+			def searchHits = response.getHits()
+			def result = [:]
+			result.total = searchHits.totalHits()
+
+			LOG.debug "Search returned ${result.total ?: 0} result(s)."
+
+			// Convert the hits back to their initial type
+			result.searchResults = domainInstancesRebuilder.buildResults(searchHits)
+
+			// Extract highlight information.
+			// Right now simply give away raw results...
+			if (params.highlight) {
+				def highlightResults = []
+				for (SearchHit hit : searchHits) {
+					highlightResults << hit.highlightFields
+				}
+				result.highlight = highlightResults
+			}
+
+			LOG.debug 'Adding score information to results.'
+
+			//Extract score information
+			//Records a map from hits of (hit.id, hit.score) returned in 'scores'
+			if (params.score) {
+				def scoreResults = [:]
+				for (SearchHit hit : searchHits) {
+					scoreResults[(hit.id)] = hit.score
+				}
+				result.scores = scoreResults
+			}
+
+			if (params.sort) {
+				def sortValues = [:]
+				searchHits.each { SearchHit hit ->
+					sortValues[hit.id] = hit.sortValues
+				}
+				result.sort = sortValues
+			}
+
+			result
+		}
+	}
+	
+	/**
+	 * Sets the index & type properties on MoreLikeThisRequest & CountRequest
+	 *
+	 * @param MoreLikeThisRequest request
+	 * @param params
+	 * @return
+	 */
+	private resolveMLTIndicesAndTypes(request, Map params) {
+		assert request instanceof MoreLikeThisRequest
+
+		// Handle the indices.
+		if (params.indices) {
+			def indices
+			if (params.indices instanceof String) {
+				// Shortcut for using 1 index only (not a list of values)
+				indices = [params.indices.toLowerCase()]
+			} else if (params.indices instanceof Class) {
+				// Resolved with the class type
+				SearchableClassMapping scm = elasticSearchContextHolder.getMappingContextByType(params.indices)
+				indices = [scm.queryingIndex]
+			} else if (params.indices instanceof Collection<Class>) {
+				indices = params.indices.collect { c ->
+					SearchableClassMapping scm = elasticSearchContextHolder.getMappingContextByType(c)
+					scm.queryingIndex
+				}
+			}
+			
+			request.searchIndices((indices ?: params.indices) as String[])
+			//request.index params.indices[0]
+		} else {
+			throw new IllegalArgumentException("Unknown object indices: ${params.indices}")
+		}
+
+		// Handle the types. Each type must reference a Domain class for now, but we may consider to make it more
+		// generic in the future to allow POGO/Map/Whatever indexing/searching
+		if (params.types) {
+			def types
+			if (params.types instanceof String) {
+				// Shortcut for using 1 type only with a string
+				def scm = elasticSearchContextHolder.getMappingContext(params.types)
+				if (!scm) {
+					throw new IllegalArgumentException("Unknown object type: ${params.types}")
+				}
+				types = [scm.elasticTypeName]
+			} else if (params.types instanceof Class) {
+				// User can also pass a class to determine the type
+				def scm = elasticSearchContextHolder.getMappingContextByType(params.types)
+				if (!scm) {
+					throw new IllegalArgumentException("Unknown object type: ${params.types}")
+				}
+				types = [scm.elasticTypeName]
+			} else if (params.types instanceof Collection && !params.types.empty) {
+				def firstCollectionElement = params.types.first()
+
+				def typeCollectionMethod
+				if (firstCollectionElement instanceof Class) {
+					typeCollectionMethod = { type ->
+						elasticSearchContextHolder.getMappingContextByType(type)
+					}
+				} else {
+					typeCollectionMethod = { name ->
+						elasticSearchContextHolder.getMappingContext(name)
+					}
+				}
+				types = params.types.collect { t ->
+					def scm = typeCollectionMethod.call(t)
+					if (!scm) {
+						throw new IllegalArgumentException("Unknown object type: ${params.types}")
+					}
+					scm.elasticTypeName
+				}
+			}
+			request.searchTypes(types as String[])
+		}
+		request.index request.searchIndices[0]
+		request.type request.searchTypes[0]
+	}
 }
