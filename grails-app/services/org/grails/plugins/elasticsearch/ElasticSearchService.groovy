@@ -270,20 +270,21 @@ class ElasticSearchService implements GrailsApplicationAware {
 
                         LOG.debug("Bulk index iteration ${i+1}: fetching $maxRes results starting from ${resultToStartFrom}")
 
-                        def results = scm.domainClass.clazz.withCriteria {
-                            firstResult(resultToStartFrom)
-                            maxResults(maxRes)
-                            order('id', 'asc')
-                        }
+                        def queryString = "select distinct o from ${scm.domainClass.clazz.name} o order by id asc"
+                        LOG.debug "querying with ${queryString}"
+                        def query = session.createQuery(queryString)
+                        query.setFirstResult(resultToStartFrom)
+                        query.setMaxResults(maxRes)
+                        def results = query.list()
 
                         LOG.debug("Bulk index iteration ${i+1}: found ${results.size()} results")
                         results.each {
                             if (operationType == INDEX_REQUEST) {
                                 indexRequestQueue.addIndexRequest(it)
-                                LOG.debug("Adding the document ${it.id} to the index request queue")
+                                log.debug("Adding the document ${it.id} to the index request queue: ${it}")
                             } else if (operationType == DELETE_REQUEST) {
                                 indexRequestQueue.addDeleteRequest(it)
-                                LOG.debug("Adding the document ${it.id} to the delete request queue")
+                                log.debug("Adding the document ${it.id} to the delete request queue: ${it}")
                             }
                         }
                         indexRequestQueue.executeRequests()
