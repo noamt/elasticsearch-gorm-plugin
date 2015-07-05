@@ -669,6 +669,26 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         elasticSearchService.countHits('Ship\\-') == 1858
     }
 
+    void 'bulk test with join'() {
+        given:
+        (1..1898).each {
+            def player = new Player(firstName: 'Person', lastName: 'McPlayer-' + it).save(flush: true)
+            (1..3).each { attr ->
+                player.addToAttributes("Attribute ${attr}")
+                player.save(flush:true)
+            }
+        }
+
+        when:
+        elasticSearchService.index(Player)
+        elasticSearchAdminService.refresh(Player)
+
+        then:
+        findFailures().size() == 0
+        // ensure each player is indexed
+        elasticSearchService.countHits('McPlayer\\-') == 1898
+    }
+
     void 'Use an aggregation'() {
         given:
         def jim = new Product(name: 'jim', price: 1.99).save(flush: true, failOnError: true)
