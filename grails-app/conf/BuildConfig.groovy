@@ -49,6 +49,7 @@ grails.project.dependency.resolution = {
         compile 'com.vividsolutions:jts:1.13'
 
         test 'com.googlecode.json-simple:json-simple:1.1.1'
+        test 'org.jadira.usertype:usertype.jodatime:1.9'
     }
 
     plugins {
@@ -59,5 +60,7 @@ grails.project.dependency.resolution = {
         test(':hibernate:3.6.10.16', ':tomcat:7.0.54') {
             export = false
         }
+
+        test ":joda-time:1.5"
     }
 }

@@ -26,6 +26,7 @@ import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.elasticsearch.search.sort.FieldSortBuilder
 import org.elasticsearch.search.sort.SortBuilders
 import org.elasticsearch.search.sort.SortOrder
+import org.joda.time.DateTime
 import test.*
 import test.custom.id.Toy
 
@@ -180,6 +181,26 @@ class ElasticSearchServiceIntegrationSpec extends IntegrationSpec {
         List<Product> searchResults = result.searchResults
         searchResults[0].name == product.name
         searchResults[0].date == product.date
+    }
+
+    void 'a joda-time date value should be marshalled and de-marshalled correctly'() {
+        def date = new DateTime()
+        given:
+        def store = new Store(name:'The Mapple Store',
+                openingDate: date
+        ).save(failOnError: true)
+
+        elasticSearchService.index(store)
+        elasticSearchAdminService.refresh()
+
+        when:
+        def result = elasticSearchService.search(store.name, [indices: Store, types: Store])
+
+        then:
+        result.total == 1
+        List<Product> searchResults = result.searchResults
+        searchResults[0].name == store.name
+        searchResults[0].openingDate == store.openingDate
     }
 
     void 'a geo point location is marshalled and de-marshalled correctly'() {
