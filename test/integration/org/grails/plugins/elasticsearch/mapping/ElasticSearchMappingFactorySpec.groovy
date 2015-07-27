@@ -42,25 +42,26 @@ class ElasticSearchMappingFactorySpec extends IntegrationSpec {
         mapping[clazz.simpleName.toLowerCase()]['properties'][property].type == expectedType
 
         where:
-        clazz    | property          || expectedType
+        clazz    | property              || expectedType
 
-        Building | 'name'            || 'string'
-        Building | 'date'            || 'date'
-        Building | 'location'        || 'geo_point'
+        Building | 'name'                || 'string'
+        Building | 'date'                || 'date'
+        Building | 'location'            || 'geo_point'
 
-        Product  | 'price'           || 'float'
-        Product  | 'json'            || 'object'
+        Product  | 'price'               || 'float'
+        Product  | 'json'                || 'object'
 
-        Catalog  | 'pages'           || 'object'
+        Catalog  | 'pages'               || 'object'
 
-        Person   | 'fullName'        || 'string'
-        Person   | 'nickNames'       || 'string'
+        Person   | 'fullName'            || 'string'
+        Person   | 'nickNames'           || 'string'
 
-        Palette  | 'colors'          || 'string'
-        Palette  | 'complementaries' || 'string'
+        Palette  | 'colors'              || 'string'
+        Palette  | 'complementaries'     || 'string'
+        Palette  | 'complementaryColors' || 'boolean'
 
-        Anagram | 'length'           || 'integer'
-        Anagram | 'palindrome'       || 'boolean'
+        Anagram  | 'length'              || 'integer'
+        Anagram  | 'palindrome'          || 'boolean'
     }
 }
 //['string', 'integer', 'long', 'float', 'double', 'boolean', 'null', 'date']

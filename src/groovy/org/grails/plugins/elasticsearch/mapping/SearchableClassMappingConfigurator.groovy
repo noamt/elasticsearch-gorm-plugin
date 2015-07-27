@@ -67,7 +67,7 @@ class SearchableClassMappingConfigurator {
         for (SearchableClassMapping scm : mappings) {
             for (SearchableClassPropertyMapping scpm : scm.getPropertiesMapping()) {
                 if (scpm.isComponent()) {
-                    Class<?> componentType = scpm.getGrailsProperty().getReferencedPropertyType()
+                    Class<?> componentType = ElasticSearchMappingFactory.getReferencedType(scpm)
                     scpm.setComponentPropertyMapping(elasticSearchContext.getMappingContextByType(componentType))
                 }
             }

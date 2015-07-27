@@ -15,13 +15,16 @@ class Palette {
         }
     }
 
+    List<Color> getComplementaryColors() {
+        colors.collect { it.complementary() }
+    }
     static transients = ['complementaries']
 
     static searchable = {
-        only = ['colors', 'complementaries']
+        only = ['colors', 'complementaries', 'complementaryColors']
     }
 
-    static hasMany = [colors : Color, tags:String, complementaries: String]
+    static hasMany = [colors : Color, tags:String, complementaries: String, complementaryColors: Color]
 
     static constraints = {
     }

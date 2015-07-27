@@ -63,6 +63,24 @@ class ElasticSearchMappingFactory {
         mapping
     }
 
+    static Class getReferencedType(SearchableClassPropertyMapping scpm) {
+        getReferencedType(scpm.grailsProperty)
+    }
+    static Class getReferencedType(GrailsDomainClassProperty domainClassProperty) {
+        Class<?> referencedType = domainClassProperty.getReferencedPropertyType()
+
+        if(Collection.isAssignableFrom(referencedType) || referencedType.isArray()) {
+            //Handle collections explictly mapped (needed for dealing with transients)
+            if (domainClassProperty.domainClass.associationMap[domainClassProperty.name]) {
+                referencedType = domainClassProperty.domainClass.associationMap[domainClassProperty.name]
+            }
+            if (referencedType.isArray()) {
+                referencedType = referencedType.getComponentType()
+            }
+        }
+        referencedType
+    }
+
     private static Map<String, Object> getMappingProperties(SearchableClassMapping scm) {
         Map<String, Object> elasticTypeMappingProperties = [:]
 
@@ -90,7 +108,7 @@ class ElasticSearchMappingFactory {
                         props = [:]
                         propOptions.properties = props
                     }
-                    GrailsDomainClass referencedDomainClass = scpm.grailsProperty.getReferencedDomainClass()
+                    GrailsDomainClass referencedDomainClass = Holders.grailsApplication.getDomainClass(getReferencedType(scpm).canonicalName)
                     GrailsDomainClassProperty idProperty = referencedDomainClass.getPropertyByName('id')
                     String idType = idProperty.getTypePropertyName()
 
@@ -152,13 +170,7 @@ class ElasticSearchMappingFactory {
             //Preprocess collections and arrays to work with it's element types
             Class referencedPropertyType = scpm.grailsProperty.getReferencedPropertyType()
             if(Collection.isAssignableFrom(referencedPropertyType) || referencedPropertyType.isArray()) {
-                //Handle collections explictly mapped (needed for dealing with transients)
-                if (scpm.grailsProperty.domainClass.associationMap[scpm.grailsProperty.name]) {
-                    referencedPropertyType = scpm.grailsProperty.domainClass.associationMap[scpm.grailsProperty.name]
-                }
-                if (referencedPropertyType.isArray()) {
-                    referencedPropertyType = referencedPropertyType.getComponentType()
-                }
+                referencedPropertyType = getReferencedType(scpm)
                 String basicType = getTypeSimpleName(referencedPropertyType)
                 if (SUPPORTED_FORMAT.contains(basicType)) {
                     propType = basicType
