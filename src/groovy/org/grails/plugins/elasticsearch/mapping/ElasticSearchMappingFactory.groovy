@@ -90,7 +90,7 @@ class ElasticSearchMappingFactory {
                         props = [:]
                         propOptions.properties = props
                     }
-                    GrailsDomainClass referencedDomainClass = scpm.grailsProperty.getReferencedDomainClass()
+                    GrailsDomainClass referencedDomainClass = scpm.grailsProperty.getReferencedDomainClass() ?: scpm.getComponentPropertyMapping().domainClass
                     GrailsDomainClassProperty idProperty = referencedDomainClass.getPropertyByName('id')
                     String idType = idProperty.getTypePropertyName()
 

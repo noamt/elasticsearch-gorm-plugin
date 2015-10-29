@@ -8,6 +8,9 @@ import test.transients.Anagram
 import test.transients.Calculation
 import test.transients.Color
 import test.transients.Palette
+import test.transients.Player
+import test.transients.Team
+import test.transients.Fan
 
 /**
  * Created by @marcos-carceles on 29/01/15.
@@ -85,5 +88,65 @@ class TransientPropertiesIntegrationSpec extends IntegrationSpec {
         grailsApplication.config.elasticSearch.includeTransients = false
         searchableClassMappingConfigurator.configureAndInstallMappings()
     }
+	
+	void 'when transient associations are mapped as component the association is searchable'() {
 
+        when: "save and index an instance which hasMany associations mapped as component"
+		new Player(name:"Ronaldo").save(flush:true)
+        def toIndex = []
+        toIndex << new Team(name: "Barcelona", strip:"White").save(flush: true)
+        elasticSearchService.index(toIndex)
+        elasticSearchAdminService.refresh()
+
+        then: "We can search using the transient collection component"
+        Team.search("Ronaldo").total == 1
+
+        and: "transients on search results using the component association use data stored on ElasticSearch"
+        Team team = Team.search("Barcelona").searchResults.first()
+        team.players.size() == 1
+        team.players[0].name == "Ronaldo" 
+		
+		when: "domain objects are fetched"
+        team = Team.get(team.id)
+		
+        then: "all propertie are available"
+        team.name == "Barcelona"
+
+		cleanup:
+        elasticSearchService.unindex(toIndex)
+        
+    }
+	
+	void 'when transient associations are mapped as refernece, the association is searchable'() {
+
+		when: "save and index an instance which hasMany associations mapped as reference"
+        def toIndex = []
+		toIndex << new Fan(name:"Eric").save(flush:true)
+        toIndex << new Team(name: "Barcelona", strip:"White").save(flush: true)
+        elasticSearchService.index(toIndex)
+        elasticSearchAdminService.refresh()
+
+		then: "we can't search using the transient reference"
+		Team.search("Eric").total == 0
+		
+        and: "but searches using the parent are built using the association reference data stored on ElasticSearch"
+		Team team = Team.search("Barcelona").searchResults.first()
+		team.fans.size() == 1
+        team.fans[0].name == "Eric" 
+		
+		when: "domain objects are fetched"
+        team = Team.get(team.id)
+		
+        then: "all propertie are available"
+        team.name == "Barcelona"
+		team.fans.size() == 1
+		team.fans[0].name == "Eric"
+
+		cleanup:
+        elasticSearchService.unindex(toIndex)
+        
+    }
+	
+
+	
 }
