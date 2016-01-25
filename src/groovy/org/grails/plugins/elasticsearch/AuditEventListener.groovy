@@ -180,10 +180,10 @@ class AuditEventListener extends AbstractPersistenceEventListener {
      * the hierarchy until it finds the root elements for the search index.
      * <p/>
      *
-     * Note: this relies on the entity being updated must have a back reference to its parent(s).
+     * Note: this relies on the entity being updated having a back reference to its parent(s).
      *
      * @param entity the entity being modified
-     * @return List of zero or more root indexed entities
+     * @return Set of zero or more root indexed entities
      */
     Set getRootIndexedEntity(entity) {
         Set roots = []
