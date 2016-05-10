@@ -19,7 +19,7 @@ class JSONDateBinder extends PropertyEditorSupport {
         }
 
         int counter = formats.size()
-        for(format in formats){
+        for (format in formats) {
             // Need to create the SimpleDateFormat every time, since it's not thread-safe
             SimpleDateFormat df = new SimpleDateFormat(format)
             df.timeZone = utcTimeZone
@@ -36,7 +36,7 @@ class JSONDateBinder extends PropertyEditorSupport {
                     println "Date ${s} did not match any of the pattern registered! You may want to add the pattern to the [elasticSearch.date.formats] setting."
                     println "Error : ${e.message}"
                 }
-            } catch(Throwable t) {
+            } catch (Throwable t) {
                 println "An error has occured ${t.message} ${format}"
             }
         }

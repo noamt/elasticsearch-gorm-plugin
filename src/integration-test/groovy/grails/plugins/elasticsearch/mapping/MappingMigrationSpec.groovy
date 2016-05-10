@@ -20,12 +20,18 @@ import test.mapping.migration.Item
 @Rollback
 class MappingMigrationSpec extends Specification {
 
-    @Autowired GrailsApplication grailsApplication
-    @Autowired SearchableClassMappingConfigurator searchableClassMappingConfigurator
-    @Autowired ElasticSearchContextHolder elasticSearchContextHolder
-    @Autowired ElasticSearchService elasticSearchService
-    @Autowired ElasticSearchAdminService elasticSearchAdminService
-    @Autowired ElasticSearchBootStrapHelper elasticSearchBootStrapHelper
+    @Autowired
+    GrailsApplication grailsApplication
+    @Autowired
+    SearchableClassMappingConfigurator searchableClassMappingConfigurator
+    @Autowired
+    ElasticSearchContextHolder elasticSearchContextHolder
+    @Autowired
+    ElasticSearchService elasticSearchService
+    @Autowired
+    ElasticSearchAdminService elasticSearchAdminService
+    @Autowired
+    ElasticSearchBootStrapHelper elasticSearchBootStrapHelper
 
     ElasticSearchAdminService getEs() {
         elasticSearchAdminService
@@ -122,8 +128,8 @@ class MappingMigrationSpec extends Specification {
         grailsApplication.config.elasticSearch.migration = [strategy: "delete"]
 
         and: "Existing content"
-        new Catalog(company:"ACME", issue: 1).save(flush:true,failOnError: true)
-        new Catalog(company:"ACME", issue: 2).save(flush:true,failOnError: true)
+        new Catalog(company: "ACME", issue: 1).save(flush: true, failOnError: true)
+        new Catalog(company: "ACME", issue: 2).save(flush: true, failOnError: true)
         elasticSearchService.index()
         elasticSearchAdminService.refresh()
 
@@ -169,8 +175,8 @@ class MappingMigrationSpec extends Specification {
         grailsApplication.config.elasticSearch.migration = [strategy: "delete"]
 
         and: "Existing content"
-        new Catalog(company:"ACME", issue: 1).save(flush:true,failOnError: true)
-        new Catalog(company:"ACME", issue: 2).save(flush:true,failOnError: true)
+        new Catalog(company: "ACME", issue: 1).save(flush: true, failOnError: true)
+        new Catalog(company: "ACME", issue: 2).save(flush: true, failOnError: true)
         elasticSearchService.index()
         elasticSearchAdminService.refresh()
 
@@ -284,9 +290,9 @@ class MappingMigrationSpec extends Specification {
         createConflictingProductMapping()
 
         and: "Existing content"
-        new Catalog(company:"ACME", issue: 1).save(flush:true,failOnError: true)
-        new Catalog(company:"ACME", issue: 2).save(flush:true,failOnError: true)
-        new Item(name:"Road Runner Ultrafast Glue").save(flush:true, failOnError: true)
+        new Catalog(company: "ACME", issue: 1).save(flush: true, failOnError: true)
+        new Catalog(company: "ACME", issue: 2).save(flush: true, failOnError: true)
+        new Item(name: "Road Runner Ultrafast Glue").save(flush: true, failOnError: true)
         elasticSearchService.index()
         elasticSearchAdminService.refresh()
 
@@ -299,7 +305,7 @@ class MappingMigrationSpec extends Specification {
         Item.search("Glue").total == 1
 
         when:
-        grailsApplication.config.elasticSearch.migration = [strategy: "alias", "aliasReplacesIndex" : false]
+        grailsApplication.config.elasticSearch.migration = [strategy: "alias", "aliasReplacesIndex": false]
         searchableClassMappingConfigurator.installMappings([catalogMapping, itemMapping])
 
         then: "an exception is thrown, due to the existing index"
@@ -316,7 +322,7 @@ class MappingMigrationSpec extends Specification {
         es.mappingExists(itemMapping.indexName, catalogMapping.elasticTypeName)
 
         when:
-        grailsApplication.config.elasticSearch.migration = [strategy: "alias", "aliasReplacesIndex" : true]
+        grailsApplication.config.elasticSearch.migration = [strategy: "alias", "aliasReplacesIndex": true]
         grailsApplication.config.elasticSearch.bulkIndexOnStartup = false //On the other cases content is recreated
         searchableClassMappingConfigurator.installMappings([catalogMapping])
 
@@ -346,6 +352,7 @@ class MappingMigrationSpec extends Specification {
      * Zero Downtime for Alias to Alias
      * Minimise Downtime for Index to Alias
      */
+
     void "Alias -> Alias : If configuration says to recreate the content, there is zero downtime"() {
 
         given: "An existing Alias"
@@ -360,9 +367,9 @@ class MappingMigrationSpec extends Specification {
         createConflictingCatalogMapping()
 
         and: "Existing content"
-        new Catalog(company:"ACME", issue: 1).save(flush:true,failOnError: true)
-        new Catalog(company:"ACME", issue: 2).save(flush:true,failOnError: true)
-        new Item(name:"Road Runner Ultrafast Glue").save(flush:true, failOnError: true)
+        new Catalog(company: "ACME", issue: 1).save(flush: true, failOnError: true)
+        new Catalog(company: "ACME", issue: 2).save(flush: true, failOnError: true)
+        new Item(name: "Road Runner Ultrafast Glue").save(flush: true, failOnError: true)
         elasticSearchService.index()
         elasticSearchAdminService.refresh()
 
@@ -436,19 +443,19 @@ class MappingMigrationSpec extends Specification {
         //Delete existing Mapping
         es.deleteMapping catalogMapping.indexName, catalogMapping.elasticTypeName
         //Create conflicting Mapping
-        catalogPagesMapping.addAttributes([component:true])
+        catalogPagesMapping.addAttributes([component: true])
         searchableClassMappingConfigurator.installMappings([catalogMapping])
         //Restore initial state for next use
-        catalogPagesMapping.addAttributes([component:'inner'])
+        catalogPagesMapping.addAttributes([component: 'inner'])
     }
 
     private void createConflictingProductMapping() {
         //Delete existing Mapping
         es.deleteMapping itemMapping.indexName, itemMapping.elasticTypeName
         //Create conflicting Mapping
-        itemSupplierMapping.addAttributes([component:true])
+        itemSupplierMapping.addAttributes([component: true])
         searchableClassMappingConfigurator.installMappings([itemMapping])
         //Restore initial state for next use
-        itemSupplierMapping.addAttributes([component:'inner'])
+        itemSupplierMapping.addAttributes([component: 'inner'])
     }
 }

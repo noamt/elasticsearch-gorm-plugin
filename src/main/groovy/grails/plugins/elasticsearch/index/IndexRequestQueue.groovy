@@ -15,16 +15,16 @@
  */
 package grails.plugins.elasticsearch.index
 
+import grails.plugins.elasticsearch.ElasticSearchContextHolder
+import grails.plugins.elasticsearch.conversion.JSONDomainFactory
+import grails.plugins.elasticsearch.exception.IndexException
+import grails.plugins.elasticsearch.mapping.SearchableClassMapping
 import org.codehaus.groovy.runtime.InvokerHelper
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.bulk.BulkRequestBuilder
 import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.xcontent.XContentBuilder
-import grails.plugins.elasticsearch.ElasticSearchContextHolder
-import grails.plugins.elasticsearch.conversion.JSONDomainFactory
-import grails.plugins.elasticsearch.exception.IndexException
-import grails.plugins.elasticsearch.mapping.SearchableClassMapping
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.util.Assert

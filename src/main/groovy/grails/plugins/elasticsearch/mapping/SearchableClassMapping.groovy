@@ -16,9 +16,9 @@
 
 package grails.plugins.elasticsearch.mapping
 
-import grails.util.GrailsNameUtils
 import grails.core.GrailsDomainClass
 import grails.plugins.elasticsearch.ElasticSearchContextHolder
+import grails.util.GrailsNameUtils
 
 class SearchableClassMapping {
 

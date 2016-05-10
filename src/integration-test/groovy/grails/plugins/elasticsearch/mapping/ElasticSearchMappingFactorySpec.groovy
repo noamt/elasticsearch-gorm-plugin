@@ -19,9 +19,12 @@ import test.transients.Palette
 @Integration
 class ElasticSearchMappingFactorySpec extends Specification {
 
-    @Autowired GrailsApplication grailsApplication
-    @Autowired SearchableClassMappingConfigurator searchableClassMappingConfigurator
-    @Autowired ElasticSearchContextHolder elasticSearchContextHolder
+    @Autowired
+    GrailsApplication grailsApplication
+    @Autowired
+    SearchableClassMappingConfigurator searchableClassMappingConfigurator
+    @Autowired
+    ElasticSearchContextHolder elasticSearchContextHolder
 
     void setup() {
         grailsApplication.config.elasticSearch.includeTransients = true
@@ -63,8 +66,8 @@ class ElasticSearchMappingFactorySpec extends Specification {
         Palette  | 'colors'          || 'string'
         Palette  | 'complementaries' || 'string'
 
-        Anagram | 'length'           || 'integer'
-        Anagram | 'palindrome'       || 'boolean'
+        Anagram  | 'length'          || 'integer'
+        Anagram  | 'palindrome'      || 'boolean'
     }
 }
 //['string', 'integer', 'long', 'float', 'double', 'boolean', 'null', 'date']

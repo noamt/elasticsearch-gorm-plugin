@@ -4,7 +4,6 @@ import grails.test.mixin.integration.Integration
 import grails.transaction.Rollback
 import org.elasticsearch.index.query.QueryBuilders
 import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Shared
 import spock.lang.Specification
 import test.all.Post
 
@@ -22,12 +21,12 @@ class AnalyzersIntegrationSpec extends Specification {
 
     def setup() {
         new Post(subject: "[abc] Grails 3.0 M1 Released!",
-                 body: "Grails 3.0 milestone 1 is now available.").save(failOnError: true)
+                body: "Grails 3.0 milestone 1 is now available.").save(failOnError: true)
         new Post(subject: "The Future of Groovy and Grails Sponsorship",
-                 body: "[abc] http://grails.io/post/108534902333/the-future-of-groovy-grails-sponsorship").save(failOnError: true)
+                body: "[abc] http://grails.io/post/108534902333/the-future-of-groovy-grails-sponsorship").save(failOnError: true)
         new Post(subject: "GORM for MongoDB 3.0 Released",
-                 body: "[xyz] GORM for MongoDB 3.0 has been released with support for MongoDB 2.6 features, including the " +
-                            "new GeoJSON types and full text search.").save(failOnError: true)
+                body: "[xyz] GORM for MongoDB 3.0 has been released with support for MongoDB 2.6 features, including the " +
+                        "new GeoJSON types and full text search.").save(failOnError: true)
     }
 
     def cleanup() {

@@ -15,9 +15,9 @@
  */
 package grails.plugins.elasticsearch
 
+import grails.plugins.elasticsearch.index.IndexRequestQueue
 import org.grails.datastore.mapping.core.Datastore
 import org.grails.datastore.mapping.engine.event.*
-import grails.plugins.elasticsearch.index.IndexRequestQueue
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEvent
