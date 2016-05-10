@@ -1,11 +1,11 @@
 package grails.plugins.elasticsearch.mapping
 
-import test.File
+import grails.core.GrailsApplication
 import grails.test.mixin.Mock
 import org.grails.core.DefaultGrailsDomainClass
-import grails.core.GrailsApplication
 import spock.lang.Specification
 import test.Building
+import test.File
 import test.Product
 
 @Mock(Product)
@@ -29,7 +29,7 @@ class SearchableDomainClassMapperSpec extends Specification {
         def locationMapping = classMapping.propertiesMapping.find { it.propertyName == 'location' }
         locationMapping.isGeoPoint()
     }
-    
+
     void 'a domain class with mapping attachment: true is mapped as attachment'() {
         ConfigObject config = [:] as ConfigObject
         GrailsApplication grailsApplication = [:] as GrailsApplication

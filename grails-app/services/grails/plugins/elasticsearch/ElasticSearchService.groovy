@@ -80,12 +80,12 @@ class ElasticSearchService implements GrailsApplicationAware {
         search(params, query)
     }
 
-	/**
-	 * Alias for the search(Map params, QueryBuilder query, Closure filter) signature
-	 *
-	 * @param query QueryBuilder query
-	 * @return
-	 */
+    /**
+     * Alias for the search(Map params, QueryBuilder query, Closure filter) signature
+     *
+     * @param query QueryBuilder query
+     * @return
+     */
     def search(QueryBuilder query, filter = null, Map params = [:]) {
         search(params, query, filter)
     }
@@ -107,10 +107,10 @@ class ElasticSearchService implements GrailsApplicationAware {
         search(request, params)
     }
 
-	def search(String query, filter, Map params = [:]){
-		SearchRequest request = buildSearchRequest(query, filter, params)
-		search(request, params)
-	}
+    def search(String query, filter, Map params = [:]) {
+        SearchRequest request = buildSearchRequest(query, filter, params)
+        search(request, params)
+    }
 
     /**
      * Returns the number of hits for a peculiar query
@@ -269,7 +269,7 @@ class ElasticSearchService implements GrailsApplicationAware {
                     for (int i = 0; i < nbRun; i++) {
                         def resultToStartFrom = i * maxRes
 
-                        LOG.debug("Bulk index iteration ${i+1}: fetching $maxRes results starting from ${resultToStartFrom}")
+                        LOG.debug("Bulk index iteration ${i + 1}: fetching $maxRes results starting from ${resultToStartFrom}")
 
                         def results = scm.domainClass.clazz.withCriteria {
                             firstResult(resultToStartFrom)
@@ -277,7 +277,7 @@ class ElasticSearchService implements GrailsApplicationAware {
                             order('id', 'asc')
                         }
 
-                        LOG.debug("Bulk index iteration ${i+1}: found ${results.size()} results")
+                        LOG.debug("Bulk index iteration ${i + 1}: found ${results.size()} results")
                         results.each {
                             if (operationType == INDEX_REQUEST) {
                                 indexRequestQueue.addIndexRequest(it)
@@ -290,7 +290,7 @@ class ElasticSearchService implements GrailsApplicationAware {
                         indexRequestQueue.executeRequests()
                         session.clear()
 
-                        log.info("Request iteration ${i+1} out of $nbRun finished")
+                        log.info("Request iteration ${i + 1} out of $nbRun finished")
                     }
                 }
 
@@ -420,13 +420,13 @@ class ElasticSearchService implements GrailsApplicationAware {
         source.query(query)
     }
 
-	SearchSourceBuilder setFilterInSource(SearchSourceBuilder source, Closure filter, Map params = [:]){
-		source.postFilter(new GXContentBuilder().buildAsBytes(filter))
-	}
+    SearchSourceBuilder setFilterInSource(SearchSourceBuilder source, Closure filter, Map params = [:]) {
+        source.postFilter(new GXContentBuilder().buildAsBytes(filter))
+    }
 
-	SearchSourceBuilder setFilterInSource(SearchSourceBuilder source, FilterBuilder filter, Map params = [:]){
-		source.postFilter(filter)
-	}
+    SearchSourceBuilder setFilterInSource(SearchSourceBuilder source, FilterBuilder filter, Map params = [:]) {
+        source.postFilter(filter)
+    }
 
     /**
      * Computes a search request and builds the results

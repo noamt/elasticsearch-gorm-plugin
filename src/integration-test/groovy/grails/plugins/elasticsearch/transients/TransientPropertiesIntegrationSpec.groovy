@@ -20,10 +20,14 @@ import test.transients.Palette
 @Rollback
 class TransientPropertiesIntegrationSpec extends Specification {
 
-    @Autowired GrailsApplication grailsApplication
-    @Autowired ElasticSearchService elasticSearchService
-    @Autowired ElasticSearchAdminService elasticSearchAdminService
-    @Autowired SearchableClassMappingConfigurator searchableClassMappingConfigurator
+    @Autowired
+    GrailsApplication grailsApplication
+    @Autowired
+    ElasticSearchService elasticSearchService
+    @Autowired
+    ElasticSearchAdminService elasticSearchAdminService
+    @Autowired
+    SearchableClassMappingConfigurator searchableClassMappingConfigurator
 
     void 'when includeTransients config is false only properties explictly included in only are indexed and searchable'() {
         expect:

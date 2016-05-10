@@ -222,7 +222,7 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
         boolean inherit = alwaysInheritProperties != null && alwaysInheritProperties
 
         def defaultExcludedProperties = esConfig.get("defaultExcludedProperties")
-        if(defaultExcludedProperties instanceof Collection) {
+        if (defaultExcludedProperties instanceof Collection) {
             log.debug("Removing default excluded properties ${defaultExcludedProperties} from mappable properties for class ${domainClass.clazz} : ${mappableProperties}")
             mappableProperties.removeAll(defaultExcludedProperties)
         }
@@ -301,7 +301,7 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
 
     private GrailsDomainClassProperty[] getDomainProperties(GrailsDomainClass domainClass) {
         GrailsDomainClassProperty[] properties
-        if(esConfig.includeTransients) {
+        if (esConfig.includeTransients) {
             properties = domainClass.getProperties()
             //These properties are specific to GORM and of no use for search. For backwards compatibility they are not included
             properties = properties - domainClass.getPropertyByName("id") - domainClass.getPropertyByName("version")

@@ -62,7 +62,7 @@ class DomainClassUnmarshaller implements DataBinder {
             SearchableClassMapping scm = elasticSearchContextHolder.findMappingContextByElasticType(type)
             if (scm == null) {
                 LOG.warn("Unknown SearchHit: ${hit.id()}#${hit.type()}: adding to result set as a raw object")
-		        results << hit.source
+                results << hit.source
                 continue
             }
 
@@ -291,7 +291,7 @@ class DomainClassUnmarshaller implements DataBinder {
                     bindData(instance, Collections.singletonMap(entry.key, propertyValue))
 //                    TODO: Remove comment
 //                    new DatabindingApi().setProperties(instance, Collections.singletonMap(entry.key, propertyValue))
-                } catch(MappingException e) {
+                } catch (MappingException e) {
                     LOG.debug("Error unmarshalling property '${entry.key}', value= ${entry.value}", e)
                 } finally {
                     unmarshallingContext.unmarshallingStack.pop()

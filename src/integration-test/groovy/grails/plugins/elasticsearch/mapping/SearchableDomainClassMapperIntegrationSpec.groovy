@@ -1,7 +1,7 @@
 package grails.plugins.elasticsearch.mapping
 
-import grails.test.mixin.integration.Integration
 import grails.plugins.elasticsearch.ElasticSearchContextHolder
+import grails.test.mixin.integration.Integration
 import spock.lang.Specification
 import test.Person
 
@@ -28,7 +28,7 @@ class SearchableDomainClassMapperIntegrationSpec extends Specification {
         SearchableClassMapping incautiousMapping = elasticSearchContextHolder.getMappingContextByType(Person)
 
         then:
-        !incautiousMapping.propertiesMapping*.grailsProperty*.name.containsAll(["firstName","lastName","password"])
+        !incautiousMapping.propertiesMapping*.grailsProperty*.name.containsAll(["firstName", "lastName", "password"])
 
     }
 }

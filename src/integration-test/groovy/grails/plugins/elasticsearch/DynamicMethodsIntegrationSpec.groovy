@@ -7,7 +7,6 @@ import org.elasticsearch.index.query.FilterBuilders
 import org.elasticsearch.index.query.QueryBuilder
 import org.elasticsearch.index.query.QueryBuilders
 import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Shared
 import spock.lang.Specification
 import test.Photo
 

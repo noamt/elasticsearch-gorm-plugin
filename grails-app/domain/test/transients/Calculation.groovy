@@ -28,6 +28,6 @@ class Calculation {
     }
 
     static searchable = {
-        except = ['a','b','division']
+        except = ['a', 'b', 'division']
     }
 }

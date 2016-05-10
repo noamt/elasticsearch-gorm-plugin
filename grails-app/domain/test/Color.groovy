@@ -13,7 +13,7 @@ class Color {
 
     static searchable = {
         root false
-        only = [ 'name' ]
+        only = ['name']
     }
 
 }

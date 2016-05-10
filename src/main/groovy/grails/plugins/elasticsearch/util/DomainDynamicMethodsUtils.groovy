@@ -18,9 +18,9 @@ package grails.plugins.elasticsearch.util
 import grails.core.GrailsDomainClass
 import grails.plugins.elasticsearch.ElasticSearchContextHolder
 import grails.plugins.elasticsearch.ElasticSearchService
+import grails.plugins.elasticsearch.exception.IndexException
 import grails.plugins.elasticsearch.mapping.SearchableClassMapping
 import org.apache.commons.logging.LogFactory
-import grails.plugins.elasticsearch.exception.IndexException
 import org.elasticsearch.index.query.FilterBuilder
 import org.elasticsearch.index.query.QueryBuilder
 
@@ -54,8 +54,8 @@ class DomainDynamicMethodsUtils {
             SearchableClassMapping scm = elasticSearchContextHolder.getMappingContext(domainCopy)
             def indexAndType = [indices: scm.queryingIndex, types: domainCopy.clazz]
 
-			String searchMethodName = grailsApplication.config.elasticSearch.searchMethodName ?: 'search'
-			String countHitsMethodName = grailsApplication.config.elasticSearch.countHitsMethodName ?: 'countHits'
+            String searchMethodName = grailsApplication.config.elasticSearch.searchMethodName ?: 'search'
+            String countHitsMethodName = grailsApplication.config.elasticSearch.countHitsMethodName ?: 'countHits'
 
             // Inject the search method
             domain.metaClass.'static'."$searchMethodName" << { String q, Map params = [:] ->
@@ -73,7 +73,7 @@ class DomainDynamicMethodsUtils {
             domain.metaClass.'static'."$searchMethodName" << { Map params, Closure q, Closure f ->
                 elasticSearchService.search(params + indexAndType, q, f)
             }
-            domain.metaClass.'static'."$searchMethodName" << { Map params, QueryBuilder q, Closure f = null->
+            domain.metaClass.'static'."$searchMethodName" << { Map params, QueryBuilder q, Closure f = null ->
                 elasticSearchService.search(params + indexAndType, q, f)
             }
             domain.metaClass.'static'."$searchMethodName" << { QueryBuilder q, Closure f = null, Map params = [:] ->
@@ -85,18 +85,18 @@ class DomainDynamicMethodsUtils {
             domain.metaClass.'static'."$searchMethodName" << { Map params, Closure q, f ->
                 elasticSearchService.search(params + indexAndType, q, f)
             }
-            domain.metaClass.'static'."$searchMethodName" << { Map params, QueryBuilder q, f = null->
+            domain.metaClass.'static'."$searchMethodName" << { Map params, QueryBuilder q, f = null ->
                 elasticSearchService.search(params + indexAndType, q, f)
             }
             domain.metaClass.'static'."$searchMethodName" << { QueryBuilder q, f = null, Map params = [:] ->
                 elasticSearchService.search(q, f, params + indexAndType)
             }
-			domain.metaClass.'static'."$searchMethodName" << { Map params, QueryBuilder q, FilterBuilder f ->
-				elasticSearchService.search(params + indexAndType, q, f)
-			}
-			domain.metaClass.'static'."$searchMethodName" << { QueryBuilder q, FilterBuilder f, Map params = [:] ->
-				elasticSearchService.search(q, f, params + indexAndType)
-			}
+            domain.metaClass.'static'."$searchMethodName" << { Map params, QueryBuilder q, FilterBuilder f ->
+                elasticSearchService.search(params + indexAndType, q, f)
+            }
+            domain.metaClass.'static'."$searchMethodName" << { QueryBuilder q, FilterBuilder f, Map params = [:] ->
+                elasticSearchService.search(q, f, params + indexAndType)
+            }
 
             // Inject the countHits method
             domain.metaClass.'static'."$countHitsMethodName" << { String q, Map params = [:] ->

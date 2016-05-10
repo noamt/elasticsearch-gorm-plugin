@@ -14,7 +14,7 @@ class ElasticSearchAdminServiceSpec extends Specification {
     void "identifies the next index version correctly"() {
         given:
         indices = indices as Set
-        service.metaClass.getIndices = {-> indices}
+        service.metaClass.getIndices = { -> indices }
         expect:
         service.getNextVersion("my.app") == expectedNext
 

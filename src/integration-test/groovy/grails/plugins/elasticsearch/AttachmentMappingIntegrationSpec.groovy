@@ -15,14 +15,16 @@ class AttachmentMappingIntegrationSpec extends Specification {
         true
     }
 
-    @Autowired ElasticSearchService elasticSearchService
-    @Autowired ElasticSearchAdminService elasticSearchAdminService
+    @Autowired
+    ElasticSearchService elasticSearchService
+    @Autowired
+    ElasticSearchAdminService elasticSearchAdminService
 
     void 'Index a File object'() {
         given:
         def contents = "It was the best of times, it was the worst of times"
         def file = new File(filename: 'myTestFile.txt',
-                attachment:contents.bytes.encodeBase64().toString())
+                attachment: contents.bytes.encodeBase64().toString())
         file.save(failOnError: true)
 
         when:

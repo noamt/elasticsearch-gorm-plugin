@@ -16,8 +16,8 @@
 
 package grails.plugins.elasticsearch.conversion.marshall
 
-import org.codehaus.groovy.runtime.InvokerHelper
 import grails.plugins.elasticsearch.mapping.SearchableClassMapping
+import org.codehaus.groovy.runtime.InvokerHelper
 
 /**
  * Marshall only searchable class ID.
