@@ -15,6 +15,7 @@ buildscript {
 
 plugins {
     id "com.jfrog.bintray" version "1.2"
+    id 'com.jfrog.artifactory' version '4.0.0'
 }
 
 version "1.0.0.2"
