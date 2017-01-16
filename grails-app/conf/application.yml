@@ -122,6 +122,7 @@ endpoints:
         unique-names: true
 
 dataSource:
+    dbCreate: create-drop
     pooled: true
     jmxExport: true
     driverClassName: org.h2.Driver

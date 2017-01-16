@@ -34,7 +34,7 @@ class ElasticSearchBootStrapHelper implements ElasticSearchConfigAware {
             elasticSearchService.index(domainsToReindex)
         } else if (bulkIndexOnStartup) { //Index all
             LOG.debug "Performing bulk indexing."
-            elasticSearchService.index()
+            elasticSearchService.index(Collections.emptyMap()) // empty map is needed for static compiling
         }
         //Update index aliases where needed
         MappingMigrationStrategy migrationStrategy = migrationConfig?.strategy ? MappingMigrationStrategy.valueOf(migrationConfig?.strategy as String) : none

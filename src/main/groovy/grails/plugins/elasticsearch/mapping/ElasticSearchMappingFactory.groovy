@@ -237,6 +237,6 @@ class ElasticSearchMappingFactory {
     }
 
     private static Map<String, Object> defaultDescriptor(String type, String index, boolean excludeFromAll) {
-        [type: type, index: index, include_in_all: !excludeFromAll]
+        [type: type, index: index, include_in_all: !excludeFromAll] as Map<String, Object>
     }
 }

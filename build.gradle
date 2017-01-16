@@ -75,7 +75,7 @@ dependencies {
     provided "org.grails:grails-dependencies"
 
     compile "org.grails:grails-core"
-    compile "org.grails.plugins:hibernate4"
+    compile "org.grails.plugins:hibernate5"
     compile "org.grails.plugins:cache"
     compile "org.hibernate:hibernate-ehcache"
 

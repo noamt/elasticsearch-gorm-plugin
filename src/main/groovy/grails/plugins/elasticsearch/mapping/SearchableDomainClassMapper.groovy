@@ -279,7 +279,7 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
             return Collections.emptySet()
         }
         if (arg instanceof String) {
-            return Collections.singleton(arg)
+            return Collections.singleton(arg) as Set<String>
         }
         if (arg instanceof Object[]) {
             return new HashSet<String>(Arrays.asList(arg as String[]))
