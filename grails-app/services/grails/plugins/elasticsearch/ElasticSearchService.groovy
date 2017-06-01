@@ -256,15 +256,15 @@ class ElasticSearchService implements GrailsApplicationAware {
                     LOG.debug("Deleting all instances of ${scm.domainClass}")
                 }
 
-                // The index is split to avoid out of memory exception
-                def count = scm.domainClass.clazz.count() ?: 0
-                LOG.debug("Found $count instances of ${scm.domainClass}")
-
-                int nbRun = Math.ceil(count / maxRes)
-
-                LOG.debug("Maximum entries allowed in each bulk request is $maxRes, so indexing is split to $nbRun iterations")
-
                 scm.domainClass.clazz.withNewSession { session ->
+                    // The index is split to avoid out of memory exception
+                    def count = scm.domainClass.clazz.count() ?: 0
+                    LOG.debug("Found $count instances of ${scm.domainClass}")
+
+                    int nbRun = Math.ceil(count / maxRes)
+
+                    LOG.debug("Maximum entries allowed in each bulk request is $maxRes, so indexing is split to $nbRun iterations")
+
                     for (int i = 0; i < nbRun; i++) {
                         def resultToStartFrom = i * maxRes
 
