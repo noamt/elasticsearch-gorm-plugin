@@ -210,7 +210,9 @@ class ClientNodeFactoryBean implements FactoryBean {
     }
     //From http://groovy.329449.n5.nabble.com/Flatten-Map-using-closure-td364360.html
     def flattenMap(map) {
-        [:].putAll(map.entrySet().flatten { it.value instanceof Map ? it.value.collect { k, v -> new MapEntry(it.key + '.' + k, v) } : it })
+        [:].putAll(map.entrySet().flatten {
+            it.value instanceof Map ? it.value.collect { k, v -> new MapEntry(it.key + '.' + k, v) } : it
+        })
     }
 
     Class getObjectType() {

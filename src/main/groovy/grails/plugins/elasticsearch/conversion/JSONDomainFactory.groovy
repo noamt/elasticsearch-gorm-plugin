@@ -17,12 +17,12 @@
 package grails.plugins.elasticsearch.conversion
 
 import grails.core.GrailsApplication
-import grails.plugins.elasticsearch.ElasticSearchContextHolder
-import org.grails.core.artefact.DomainClassArtefactHandler
 import grails.core.GrailsDomainClass
-import org.elasticsearch.common.xcontent.XContentBuilder
+import grails.plugins.elasticsearch.ElasticSearchContextHolder
 import grails.plugins.elasticsearch.conversion.marshall.*
 import grails.plugins.elasticsearch.unwrap.DomainClassUnWrapperChain
+import org.elasticsearch.common.xcontent.XContentBuilder
+import org.grails.core.artefact.DomainClassArtefactHandler
 
 import java.beans.PropertyEditor
 

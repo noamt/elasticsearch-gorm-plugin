@@ -47,7 +47,7 @@ class DefaultMarshallingContext {
      * @param maxDepth remained maxDepth
      */
     def push(instance, maxDepth) {
-        marshallStack.push(new MarshalledObject(instance:instance,maxDepth:maxDepth ?: this.maxDepth))
+        marshallStack.push(new MarshalledObject(instance: instance, maxDepth: maxDepth ?: this.maxDepth))
     }
 
     def pop() {

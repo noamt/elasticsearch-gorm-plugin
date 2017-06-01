@@ -1,13 +1,13 @@
 package grails.plugins.elasticsearch.conversion.unmarshall
 
-import grails.test.mixin.integration.Integration
 import grails.core.GrailsApplication
+import grails.plugins.elasticsearch.ElasticSearchContextHolder
+import grails.plugins.elasticsearch.exception.MappingException
+import grails.test.mixin.integration.Integration
 import org.elasticsearch.common.bytes.BytesArray
 import org.elasticsearch.common.text.Text
 import org.elasticsearch.search.internal.InternalSearchHit
 import org.elasticsearch.search.internal.InternalSearchHits
-import grails.plugins.elasticsearch.ElasticSearchContextHolder
-import grails.plugins.elasticsearch.exception.MappingException
 import org.slf4j.Logger
 import spock.lang.Specification
 import test.GeoPoint
@@ -121,7 +121,11 @@ class DomainClassUnmarshallerIntegrationSpec extends Specification {
         Logger origLog = logField.get(null)
         Logger mockLog = Mock(Logger) {
             debug(_ as String) >> { String s -> if (origLog.debugEnabled) println("DEBUG: $s") }
-            debug(_ as String, _ as Throwable) >> { String s, Throwable t -> if (origLog.debugEnabled) { println("DEBUG: $s"); t.printStackTrace(System.out) } }
+            debug(_ as String, _ as Throwable) >> { String s, Throwable t ->
+                if (origLog.debugEnabled) {
+                    println("DEBUG: $s"); t.printStackTrace(System.out)
+                }
+            }
             error(_ as String) >> { String s -> System.err.println("ERROR: $s") }
             error(_ as String, _ as Throwable) >> { String s, Throwable t -> System.err.println("ERROR: $s"); t.printStackTrace() }
         }

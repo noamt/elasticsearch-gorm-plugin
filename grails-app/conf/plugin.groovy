@@ -75,20 +75,20 @@ elasticSearch {
      */
     includeTransients = false
 
-	/**
-	* Disable dynamic method injection in domain class
-	*/
-	disableDynamicMethodsInjection = false
+    /**
+     * Disable dynamic method injection in domain class
+     */
+    disableDynamicMethodsInjection = false
 
-	/** 
-	* Search method name in domain class, defaults to search
-	*/
-	searchMethodName = "search"
+    /**
+     * Search method name in domain class, defaults to search
+     */
+    searchMethodName = "search"
 
-	/** 
-	* countHits method name in domain class, defaults to search
-	*/
-	countHitsMethodName = "countHits"
+    /**
+     * countHits method name in domain class, defaults to search
+     */
+    countHitsMethodName = "countHits"
 }
 
 environments {

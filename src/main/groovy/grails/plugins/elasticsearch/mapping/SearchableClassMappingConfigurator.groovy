@@ -72,9 +72,16 @@ class SearchableClassMappingConfigurator implements ElasticSearchConfigAware {
         // Inject cross-referenced component mappings.
         for (SearchableClassMapping scm : mappings) {
             for (SearchableClassPropertyMapping scpm : scm.getPropertiesMapping()) {
-                if (scpm.isComponent()) {
+                LOG.debug("\n\n\n\n")
+                LOG.debug(scpm.dump())
+                LOG.debug("\n\n\n\n")
+                if (scpm.isComponent() && scpm.getGrailsProperty().isPersistent()) {
                     Class<?> componentType = scpm.getGrailsProperty().getReferencedPropertyType()
                     scpm.setComponentPropertyMapping(elasticSearchContext.getMappingContextByType(componentType))
+                } else if(scpm.isComponent()) {
+                    Class<?> componentType = scpm.getGrailsProperty().getDomainClass().getRelatedClassType(scpm.propertyName)
+                    scpm.setComponentPropertyMapping(elasticSearchContext.getMappingContextByType(componentType))
+
                 }
             }
         }

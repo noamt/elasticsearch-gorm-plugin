@@ -6,7 +6,7 @@ class Catalog {
     String issue
     List pages
 
-    static hasMany = [pages:Page]
+    static hasMany = [pages: Page]
 
     static constraints = {
     }

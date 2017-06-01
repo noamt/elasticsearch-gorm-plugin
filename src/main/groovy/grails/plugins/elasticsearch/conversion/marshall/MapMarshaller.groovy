@@ -14,7 +14,7 @@ class MapMarshaller extends DefaultMarshaller {
         return marshallResult
     }
 
-    protected nullValue(){
+    protected nullValue() {
         return [:]
     }
 }

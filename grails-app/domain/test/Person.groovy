@@ -16,8 +16,8 @@ class Person {
     }
 
     static transients = ['fullName']
-    static hasMany = [nickNames:String]
-    
+    static hasMany = [nickNames: String]
+
     static mapping = {
         autoImport(false)
     }

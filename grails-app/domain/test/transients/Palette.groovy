@@ -21,7 +21,7 @@ class Palette {
         only = ['colors', 'complementaries']
     }
 
-    static hasMany = [colors : Color, tags:String, complementaries: String]
+    static hasMany = [colors: Color, tags: String, complementaries: String]
 
     static constraints = {
     }
@@ -31,7 +31,7 @@ enum Color {
     cyan, magenta, yellow, red, green, blue
 
     Color complementary() {
-        switch(this) {
+        switch (this) {
             case cyan: return red
             case magenta: return green
             case yellow: return blue

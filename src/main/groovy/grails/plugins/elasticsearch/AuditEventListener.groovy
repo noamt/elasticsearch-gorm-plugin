@@ -15,9 +15,9 @@
  */
 package grails.plugins.elasticsearch
 
+import grails.plugins.elasticsearch.index.IndexRequestQueue
 import org.grails.datastore.mapping.core.Datastore
 import org.grails.datastore.mapping.engine.event.*
-import grails.plugins.elasticsearch.index.IndexRequestQueue
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEvent
@@ -128,9 +128,9 @@ class AuditEventListener extends AbstractPersistenceEventListener {
             logger.warn('Received a PostInsertEvent with no entity')
             return
         }
-        if (elasticSearchContextHolder.isRootClass(entity.class)) {
-            pushToIndex(entity)
-        }
+
+        Set roots = getRootIndexedEntity(entity)
+        roots?.each { pushToIndex(it) }
     }
 
     void onPostUpdate(PostUpdateEvent event) {
@@ -139,9 +139,9 @@ class AuditEventListener extends AbstractPersistenceEventListener {
             logger.warn('Received a PostUpdateEvent with no entity')
             return
         }
-        if (elasticSearchContextHolder.isRootClass(entity.class)) {
-            pushToIndex(entity)
-        }
+
+        Set roots = getRootIndexedEntity(entity)
+        roots?.each { pushToIndex(it) }
     }
 
     void onPostDelete(PostDeleteEvent event) {
@@ -150,9 +150,9 @@ class AuditEventListener extends AbstractPersistenceEventListener {
             logger.warn('Received a PostDeleteEvent with no entity')
             return
         }
-        if (elasticSearchContextHolder.isRootClass(entity.class)) {
-            pushToDelete(entity)
-        }
+
+        Set roots = getRootIndexedEntity(entity)
+        roots?.each { pushToDelete(it) }
     }
 
     Map getPendingObjects() {
@@ -169,6 +169,46 @@ class AuditEventListener extends AbstractPersistenceEventListener {
 
     void clearDeletedObjects() {
         deletedObjects.remove()
+    }
+
+    /**
+     * Recursively traverse up the entity hierarchy, using the <code>belongsTo</code> property to find the parent(s) of
+     * the entity being modified.
+     * <p/>
+     *
+     * As long as each parent is 'searchable' (i.e. it has the 'searchable' static member), the code will continue up
+     * the hierarchy until it finds the root elements for the search index.
+     * <p/>
+     *
+     * Note: this relies on the entity being updated having a back reference to its parent(s).
+     *
+     * @param entity the entity being modified
+     * @return Set of zero or more root indexed entities
+     */
+    Set getRootIndexedEntity(entity) {
+        Set roots = []
+
+        if (elasticSearchContextHolder.isRootClass(entity.class)) {
+            roots << entity
+        } else if (entity.hasProperty('searchable') && entity.searchable && entity.hasProperty('belongsTo')) {
+            if (entity.belongsTo instanceof Map) {
+                entity.belongsTo.keySet().each {
+                    def parent = entity[it]
+
+                    roots.addAll(getRootIndexedEntity(parent))
+                }
+            } else if (entity.belongsTo instanceof List) {
+                entity.belongsTo.each { parentType ->
+                    def parent = entity.class.getDeclaredFields().find { it.getType() == parentType }
+
+                    if (parent) {
+                        roots.addAll(getRootIndexedEntity(parent))
+                    }
+                }
+            }
+        }
+
+        roots
     }
 
     private def getEventEntity(AbstractPersistenceEvent event) {

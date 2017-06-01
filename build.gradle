@@ -8,13 +8,15 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-		classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.5.3'
-		classpath 'org.ajoberstar:gradle-git:1.4.2'
+        classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.5.3'
+        classpath 'org.ajoberstar:gradle-git:1.4.2'
+        classpath "org.grails.plugins:hibernate5:6.0.4"
     }
 }
 
 plugins {
     id "com.jfrog.bintray" version "1.2"
+    id 'com.jfrog.artifactory' version '4.0.0'
 }
 
 version "1.2.1"
@@ -24,13 +26,13 @@ apply plugin: 'maven-publish'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: "org.grails.grails-plugin"
-apply plugin:"org.grails.grails-plugin-publish"
+apply plugin: "org.grails.grails-plugin-publish"
 apply plugin: "org.grails.grails-gsp"
 
 ext {
     grailsVersion = project.grailsVersion
     gradleWrapperVersion = project.gradleWrapperVersion
-	elasticsearchVersion = "2.3.3"
+    elasticsearchVersion = "2.3.3"
 }
 
 sourceCompatibility = 1.7
@@ -50,7 +52,7 @@ dependencyManagement {
 }
 
 jar {
-	exclude "test/**"
+    exclude "test/**"
     exclude "test/**/**"
 }
 
@@ -75,7 +77,7 @@ dependencies {
     provided "org.grails:grails-dependencies"
 
     compile "org.grails:grails-core"
-    compile "org.grails.plugins:hibernate4"
+    compile "org.grails.plugins:hibernate5"
     compile "org.grails.plugins:cache"
     compile "org.hibernate:hibernate-ehcache"
 
@@ -87,6 +89,9 @@ dependencies {
     testCompile "org.grails:grails-plugin-testing"
 
     console "org.grails:grails-console"
+    profile "org.grails.profiles:web-plugin"
+    provided "org.grails:grails-plugin-services"
+    provided "org.grails:grails-plugin-domain-class"
 
     compile "org.elasticsearch.plugin:mapper-attachments:${elasticsearchVersion}"
 }

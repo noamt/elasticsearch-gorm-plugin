@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import grails.plugins.Plugin
 import grails.plugins.elasticsearch.*
 import grails.plugins.elasticsearch.conversion.CustomEditorRegistrar
@@ -24,10 +25,8 @@ import grails.plugins.elasticsearch.mapping.SearchableClassMappingConfigurator
 import grails.plugins.elasticsearch.unwrap.DomainClassUnWrapperChain
 import grails.plugins.elasticsearch.unwrap.HibernateProxyUnWrapper
 import grails.plugins.elasticsearch.util.DomainDynamicMethodsUtils
-import grails.util.Environment
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.core.env.MapPropertySource
 
 class ElasticsearchGrailsPlugin extends Plugin {
 
@@ -37,11 +36,11 @@ class ElasticsearchGrailsPlugin extends Plugin {
 
     def loadAfter = ['services', 'mongodb']
 
-	def pluginExcludes = [
-			"grails-app/views/error.gsp",
-			"**/test/**",
-			"src/docs/**"
-	]
+    def pluginExcludes = [
+            "grails-app/views/error.gsp",
+            "**/test/**",
+            "src/docs/**"
+    ]
 
     def license = 'APACHE'
 
@@ -140,8 +139,8 @@ class ElasticsearchGrailsPlugin extends Plugin {
 
     void doWithDynamicMethods() {
         // Define the custom ElasticSearch mapping for searchable domain classes
-		if(grailsApplication.config.elasticSearch.disableDynamicMethodsInjection == false) {
-			DomainDynamicMethodsUtils.injectDynamicMethods(grailsApplication, applicationContext)
-		}
+        if (grailsApplication.config.elasticSearch.disableDynamicMethodsInjection == false) {
+            DomainDynamicMethodsUtils.injectDynamicMethods(grailsApplication, applicationContext)
+        }
     }
 }

@@ -61,7 +61,7 @@ class SearchableClassPropertyMapping {
             }
         }
     }
-    
+
     boolean isAttachment() {
         specialMappingAttributes.attachment != null
     }
@@ -94,7 +94,7 @@ class SearchableClassPropertyMapping {
         (parentVal != null) && ((Boolean) parentVal)
     }
 
-    boolean isDynamic(){
+    boolean isDynamic() {
         specialMappingAttributes.dynamic
     }
 
@@ -210,11 +210,11 @@ class SearchableClassPropertyMapping {
         (geoPoint != null && ((Boolean) geoPoint))
     }
 
-	boolean isAlias(){
+    boolean isAlias() {
         getAlias();
-	}
-	
-	String getAlias(){
-		specialMappingAttributes.get('alias')
-	}
+    }
+
+    String getAlias() {
+        specialMappingAttributes.get('alias')
+    }
 }

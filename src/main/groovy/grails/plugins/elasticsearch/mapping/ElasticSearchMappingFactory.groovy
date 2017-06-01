@@ -90,7 +90,7 @@ class ElasticSearchMappingFactory {
                         props = [:]
                         propOptions.properties = props
                     }
-                    GrailsDomainClass referencedDomainClass = scpm.grailsProperty.getReferencedDomainClass()
+                    GrailsDomainClass referencedDomainClass = scpm.grailsProperty.getReferencedDomainClass() ?: scpm.getComponentPropertyMapping().domainClass
                     GrailsDomainClassProperty idProperty = referencedDomainClass.getPropertyByName('id')
                     String idType = idProperty.getTypePropertyName()
 
@@ -112,7 +112,7 @@ class ElasticSearchMappingFactory {
                 propOptions.include_in_all = !scpm.shouldExcludeFromAll()
             }
             // todo only enable this through configuration...
-            if(propType == 'string' && scpm.isDynamic()) {
+            if (propType == 'string' && scpm.isDynamic()) {
                 propOptions.type = 'object'
                 propOptions.dynamic = true
             } else if ((propType == 'string') && scpm.isAnalyzed()) {
@@ -144,14 +144,14 @@ class ElasticSearchMappingFactory {
 
         if (scpm.isGeoPoint()) {
             propType = 'geo_point'
-        } else if(scpm.isAttachment()) {
+        } else if (scpm.isAttachment()) {
             propType = 'attachment'
         } else {
             propType = scpm.grailsProperty.getTypePropertyName()
 
             //Preprocess collections and arrays to work with it's element types
             Class referencedPropertyType = scpm.grailsProperty.getReferencedPropertyType()
-            if(Collection.isAssignableFrom(referencedPropertyType) || referencedPropertyType.isArray()) {
+            if (Collection.isAssignableFrom(referencedPropertyType) || referencedPropertyType.isArray()) {
                 //Handle collections explictly mapped (needed for dealing with transients)
                 if (scpm.grailsProperty.domainClass.associationMap[scpm.grailsProperty.name]) {
                     referencedPropertyType = scpm.grailsProperty.domainClass.associationMap[scpm.grailsProperty.name]
@@ -204,7 +204,7 @@ class ElasticSearchMappingFactory {
         propType
     }
 
-    private static String getTypeSimpleName(Class type){
+    private static String getTypeSimpleName(Class type) {
         ClassUtils.getShortName(type).toLowerCase(Locale.ENGLISH)
     }
 
@@ -237,6 +237,6 @@ class ElasticSearchMappingFactory {
     }
 
     private static Map<String, Object> defaultDescriptor(String type, String index, boolean excludeFromAll) {
-        [type: type, index: index, include_in_all: !excludeFromAll]
+        [type: type, index: index, include_in_all: !excludeFromAll] as Map<String, Object>
     }
 }
