@@ -94,8 +94,6 @@ class ElasticsearchGrailsPlugin extends Plugin {
                 grailsApplication = grailsApplication
                 es = ref('elasticSearchAdminService')
                 mmm = ref('mappingMigrationManager')
-
-                bean.initMethod = 'configureAndInstallMappings'
             }
             domainInstancesRebuilder(DomainClassUnmarshaller) {
                 elasticSearchContextHolder = ref('elasticSearchContextHolder')
