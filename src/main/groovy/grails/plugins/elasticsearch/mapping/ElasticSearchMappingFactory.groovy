@@ -151,6 +151,12 @@ class ElasticSearchMappingFactory {
 
             //Preprocess collections and arrays to work with it's element types
             Class referencedPropertyType = scpm.grailsProperty.getReferencedPropertyType()
+
+            //referencedPropertyType received null if the propType is long
+            if (referencedPropertyType == null && propType == 'long') {
+                referencedPropertyType = "java.lang.Long"
+            }
+
             if (Collection.isAssignableFrom(referencedPropertyType) || referencedPropertyType.isArray()) {
                 //Handle collections explictly mapped (needed for dealing with transients)
                 if (scpm.grailsProperty.domainClass.associationMap[scpm.grailsProperty.name]) {
