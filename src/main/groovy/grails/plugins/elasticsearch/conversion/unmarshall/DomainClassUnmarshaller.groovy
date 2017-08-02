@@ -248,7 +248,7 @@ class DomainClassUnmarshaller implements DataBinder {
 
                 parseResult = null
             } else if (scpm.grailsProperty.type == Date && null != propertyValue) {
-                parseResult = XContentBuilder.defaultDatePrinter.parseDateTime(propertyValue).toDate()
+                parseResult = XContentBuilder.DEFAULT_DATE_PRINTER.parseDateTime(propertyValue).toDate()
             }
         }
 

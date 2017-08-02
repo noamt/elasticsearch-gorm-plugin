@@ -5,6 +5,8 @@
 .gradle
 build/
 
+libs
+
 # Log files
 *.log
 

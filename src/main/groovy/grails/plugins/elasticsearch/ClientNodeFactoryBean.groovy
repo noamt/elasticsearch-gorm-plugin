@@ -22,17 +22,18 @@ import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.InetSocketTransportAddress
 import org.elasticsearch.mapper.attachments.MapperAttachmentsPlugin
 import org.elasticsearch.node.Node
-import org.elasticsearch.node.internal.InternalSettingsPreparer
 import org.elasticsearch.plugins.Plugin
+import org.elasticsearch.transport.client.PreBuiltTransportClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.FactoryBean
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
-
+import org.elasticsearch.node.InternalSettingsPreparer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+
 
 class ClientNodeFactoryBean implements FactoryBean {
 
@@ -50,7 +51,7 @@ class ClientNodeFactoryBean implements FactoryBean {
             throw new IllegalArgumentException("Invalid client mode, expected values were ${SUPPORTED_MODES}.")
         }
 
-        Settings.Builder settings = Settings.settingsBuilder()
+        Settings.Builder settings = Settings.builder()
         def configFile = elasticSearchContextHolder.config.bootstrap.config.file
         if (configFile) {
             LOG.info "Looking for bootstrap configuration file at: $configFile"
@@ -74,7 +75,7 @@ class ClientNodeFactoryBean implements FactoryBean {
         // Configure the client based on the client mode
         switch (clientMode) {
             case 'transport':
-                def transportSettings = Settings.settingsBuilder()
+                def transportSettings = Settings.builder()
 
                 def transportSettingsFile = elasticSearchContextHolder.config.bootstrap.transportSettings.file
                 if (transportSettingsFile) {
@@ -88,17 +89,17 @@ class ClientNodeFactoryBean implements FactoryBean {
                 if (elasticSearchContextHolder.config.cluster.name) {
                     transportSettings.put('cluster.name', elasticSearchContextHolder.config.cluster.name.toString())
                 }
-                transportClient = TransportClient.builder().settings(transportSettings).build()
+                transportClient = new PreBuiltTransportClient(transportSettings, Collections.emptyList());
 
                 boolean ip4Enabled = elasticSearchContextHolder.config.shield.ip4Enabled ?: true
                 boolean ip6Enabled = elasticSearchContextHolder.config.shield.ip6Enabled ?: false
 
                 try {
                     def shield = Class.forName("org.elasticsearch.shield.ShieldPlugin")
-                    transportClient = TransportClient.builder().addPlugin(shield).settings(transportSettings).build();
+                    transportClient = new PreBuiltTransportClient(transportSettings, Collections.singletonList(shield));
                     LOG.info("Shield Enabled")
                 } catch (ClassNotFoundException e) {
-                    transportClient = TransportClient.builder().settings(transportSettings).build()
+                    transportClient = new PreBuiltTransportClient(transportSettings, Collections.emptyList());
                 }
 
                 // Configure transport addresses
@@ -158,7 +159,9 @@ class ClientNodeFactoryBean implements FactoryBean {
                 LOG.info "Setting embedded ElasticSearch tmp dir to ${tmpDirectory}"
                 settings.put("path.home", tmpDirectory)
 
-                settings.put("node.local", true)
+                //settings.put("node.local", true)
+                settings.put("transport.type", "local")
+                settings.put("http.enabled", false)
                 break
 
             case 'dataNode':
@@ -240,7 +243,7 @@ class ClientNodeFactoryBean implements FactoryBean {
 
     private static class PluginEnabledNode extends Node {
         PluginEnabledNode(Settings.Builder settings, Class<? extends Plugin> ... plugins) {
-            super(InternalSettingsPreparer.prepareEnvironment(settings.build(), null), Version.CURRENT, plugins as List<Plugin>)
+            super(InternalSettingsPreparer.prepareEnvironment(settings.build(), null), plugins as List<Plugin>)
         }
     }
 }

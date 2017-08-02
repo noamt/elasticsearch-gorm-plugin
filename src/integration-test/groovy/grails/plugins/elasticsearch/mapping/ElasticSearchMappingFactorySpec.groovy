@@ -51,7 +51,7 @@ class ElasticSearchMappingFactorySpec extends Specification {
         where:
         clazz    | property          || expectedType
 
-        Building | 'name'            || 'string'
+        Building | 'name'            || 'text'
         Building | 'date'            || 'date'
         Building | 'location'        || 'geo_point'
 
@@ -60,11 +60,11 @@ class ElasticSearchMappingFactorySpec extends Specification {
 
         Catalog  | 'pages'           || 'object'
 
-        Person   | 'fullName'        || 'string'
-        Person   | 'nickNames'       || 'string'
+        Person   | 'fullName'        || 'text'
+        Person   | 'nickNames'       || 'text'
 
-        Palette  | 'colors'          || 'string'
-        Palette  | 'complementaries' || 'string'
+        Palette  | 'colors'          || 'text'
+        Palette  | 'complementaries' || 'text'
 
         Anagram  | 'length'          || 'integer'
         Anagram  | 'palindrome'      || 'boolean'
