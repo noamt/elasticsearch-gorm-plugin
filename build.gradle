@@ -1,3 +1,5 @@
+import de.undercouch.gradle.tasks.download.Download
+
 buildscript {
     ext {
         grailsVersion = project.grailsVersion
@@ -17,9 +19,10 @@ buildscript {
 plugins {
     id "com.jfrog.bintray" version "1.2"
     id 'com.jfrog.artifactory' version '4.0.0'
+    id "de.undercouch.download" version "3.2.0"
 }
 
-version "1.2.1"
+version "1.4.0"
 group "org.grails.plugins"
 
 apply plugin: 'maven-publish'
@@ -32,7 +35,7 @@ apply plugin: "org.grails.grails-gsp"
 ext {
     grailsVersion = project.grailsVersion
     gradleWrapperVersion = project.gradleWrapperVersion
-    elasticsearchVersion = "2.3.3"
+    elasticsearchVersion = "5.3.3"
 }
 
 sourceCompatibility = 1.7
@@ -66,7 +69,7 @@ sourcesJar {
     exclude "test/**/**"
 }
 
-def elasticsearchVersion = '2.3.3'
+def elasticsearchVersion = '5.4.1'
 
 dependencies {
     provided 'org.springframework.boot:spring-boot-starter-logging'
@@ -81,7 +84,12 @@ dependencies {
     compile "org.grails.plugins:cache"
     compile "org.hibernate:hibernate-ehcache"
 
+    compile "org.apache.logging.log4j:log4j-api:2.7"
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.7'
+
     compile "org.elasticsearch:elasticsearch:${elasticsearchVersion}"
+    compile group: 'org.elasticsearch.client', name: 'transport', version: elasticsearchVersion
+
 
     testRuntime 'com.spatial4j:spatial4j:0.4.1'
     testCompile 'com.vividsolutions:jts:1.13'
@@ -93,7 +101,34 @@ dependencies {
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
 
-    compile "org.elasticsearch.plugin:mapper-attachments:${elasticsearchVersion}"
+    //compile "org.elasticsearch.plugin:mapper-attachments:${elasticsearchAttachmentsVersion}"
+    compile fileTree(dir: "libs/elasticsearch", include: '*.jar')
+
+}
+
+task downloadAttachmentsPlugin(type: Download) {
+    src "https://artifacts.elastic.co/downloads/elasticsearch-plugins/mapper-attachments/mapper-attachments-${elasticsearchVersion}.zip"
+    dest "libs/mapper-attachments-${elasticsearchVersion}.zip"
+    overwrite true
+    onlyIfNewer true
+}
+
+task downloadAndUnzipAttachmentsPlugin(dependsOn: downloadAttachmentsPlugin) {
+    doLast {
+        copy {
+            from zipTree(downloadAttachmentsPlugin.dest)
+            into 'libs/'
+        }
+        delete 'libs/elasticsearch/commons-codec-1.10.jar'
+    }
+}
+
+compileJava{
+    dependsOn downloadAndUnzipAttachmentsPlugin
+}
+
+task cleanLibsDir(type: Delete) {
+    delete fileTree(dir: 'libs')
 }
 
 task wrapper(type: Wrapper) {
@@ -106,6 +141,7 @@ check.doLast {
 
 clean.doLast {
     cleanDataDir.execute()
+    cleanLibsDir.execute()
 }
 
 task cleanDataDir(type: Delete) {

@@ -24,6 +24,7 @@ class Person {
 
     static searchable = {
         root false
+        firstName fields: [raw: [type: 'keyword']]
     }
 
     static constraints = {

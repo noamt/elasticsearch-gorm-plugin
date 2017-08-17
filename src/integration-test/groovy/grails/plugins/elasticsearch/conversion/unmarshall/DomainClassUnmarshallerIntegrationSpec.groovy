@@ -6,8 +6,8 @@ import grails.plugins.elasticsearch.exception.MappingException
 import grails.test.mixin.integration.Integration
 import org.elasticsearch.common.bytes.BytesArray
 import org.elasticsearch.common.text.Text
-import org.elasticsearch.search.internal.InternalSearchHit
-import org.elasticsearch.search.internal.InternalSearchHits
+import org.elasticsearch.search.SearchHit
+import org.elasticsearch.search.SearchHits
 import org.slf4j.Logger
 import spock.lang.Specification
 import test.GeoPoint
@@ -32,12 +32,12 @@ class DomainClassUnmarshallerIntegrationSpec extends Specification {
         def unmarshaller = new DomainClassUnmarshaller(elasticSearchContextHolder: elasticSearchContextHolder, grailsApplication: grailsApplication)
 
         given: 'a search hit with a geo_point'
-        InternalSearchHit hit = new InternalSearchHit(1, '1', new Text('building'), [:])
+        SearchHit hit = new SearchHit(1, '1', new Text('building'), [:])
                 .sourceRef(new BytesArray('{"location":{"class":"test.GeoPoint","id":"2", "lat":53.0,"lon":10.0},"name":"WatchTower"}'))
-        InternalSearchHit[] hits = [hit]
+        SearchHit[] hits = [hit]
         def maxScore = 0.1534264087677002f
         def totalHits = 1
-        def searchHits = new InternalSearchHits(hits, totalHits, maxScore)
+        def searchHits = new SearchHits(hits, totalHits, maxScore)
 
         when: 'an geo_point is unmarshalled'
         def results = unmarshaller.buildResults(searchHits)
@@ -55,12 +55,12 @@ class DomainClassUnmarshallerIntegrationSpec extends Specification {
         def unmarshaller = new DomainClassUnmarshaller(elasticSearchContextHolder: elasticSearchContextHolder, grailsApplication: grailsApplication)
 
         given: 'a search hit with a color with unhandled properties r-g-b'
-        InternalSearchHit hit = new InternalSearchHit(1, '1', new Text('color'), [:])
+        SearchHit hit = new SearchHit(1, '1', new Text('color'), [:])
                 .sourceRef(new BytesArray('{"name":"Orange", "red":255, "green":153, "blue":0}'))
-        InternalSearchHit[] hits = [hit]
+        SearchHit[] hits = [hit]
         def maxScore = 0.1534264087677002f
         def totalHits = 1
-        def searchHits = new InternalSearchHits(hits, totalHits, maxScore)
+        def searchHits = new SearchHits(hits, totalHits, maxScore)
         GroovySpy(MappingException, global: true)
 
         when: 'the color is unmarshalled'
@@ -85,12 +85,12 @@ class DomainClassUnmarshallerIntegrationSpec extends Specification {
         def unmarshaller = new DomainClassUnmarshaller(elasticSearchContextHolder: elasticSearchContextHolder, grailsApplication: grailsApplication)
 
         given: 'a search hit with a circle, within it a color with an unhandled properties "red"'
-        InternalSearchHit hit = new InternalSearchHit(1, '1', new Text('circle'), [:])
+        SearchHit hit = new SearchHit(1, '1', new Text('circle'), [:])
                 .sourceRef(new BytesArray('{"radius":7, "color":{"class":"test.Color", "id":"2", "name":"Orange", "red":255}}'))
-        InternalSearchHit[] hits = [hit]
+        SearchHit[] hits = [hit]
         def maxScore = 0.1534264087677002f
         def totalHits = 1
-        def searchHits = new InternalSearchHits(hits, totalHits, maxScore)
+        def searchHits = new SearchHits(hits, totalHits, maxScore)
         GroovySpy(MappingException, global: true)
 
         when: 'the circle is unmarshalled'

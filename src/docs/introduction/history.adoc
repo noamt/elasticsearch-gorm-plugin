@@ -2,6 +2,14 @@
 
 ==== Grails 3.x version
 
+* August 17, 2017
+** 1.4.0
+*** Upgraded to Elasticsearch 5.4.1
+**** Changed data types 'string' to 'text' and 'keyword' with sensible defaults
+**** BREAKING CHANGE: if you want to sort or aggregate by text properties your need to add fielddata: true since it is disabled by default in ES 5.x
+**** BREAKING CHANGE: default search type changed to QUERY_THEN_FETCH. See the tip at the end of https://www.elastic.co/guide/en/elasticsearch/guide/current/relevance-is-broken.html[here]
+**** Added initial support for https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-fields.html[fields]
+
 * June 3, 2016
 ** 1.2.0
 *** Upgraded to Elasticsearch 2.3.3

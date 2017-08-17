@@ -7,16 +7,16 @@ if (bintrayProperties.exists()) {
         bintrayUsername = properties.bintrayUsername
         bintrayApiKey = properties.bintrayApiKey
     }
+}
 
-    grailsPublish {
-        githubSlug = 'noamt/elasticsearch-grails-plugin'
-        license {
-            name = 'Apache-2.0'
-        }
-        title = "Elasticserach"
-        desc = "An Elasticsearch plugin for Grails"
-        developers = [noam: 'Noam Y. Tenne', macrcos: 'Marcos Carceles', puneet: 'Puneet Behl', james: 'James Kleeh']
+grailsPublish {
+    githubSlug = 'noamt/elasticsearch-grails-plugin'
+    license {
+        name = 'Apache-2.0'
     }
+    title = "Elasticserach"
+    desc = "An Elasticsearch plugin for Grails"
+    developers = [noam: 'Noam Y. Tenne', macrcos: 'Marcos Carceles', puneet: 'Puneet Behl', james: 'James Kleeh']
 }
 
 // Publish gh-pages on github

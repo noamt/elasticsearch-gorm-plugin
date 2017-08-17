@@ -3,16 +3,18 @@ package test
 import org.grails.web.json.JSONObject
 
 class Product {
-    String name
+    String productName
     String description = "A description of a product"
     Float price = 1.00
     Date date
     JSONObject json
 
-    static searchable = true
+    static searchable = {
+        productName fielddata: true
+    }
 
     static constraints = {
-        name blank: false
+        productName blank: false
         description nullable: true
         price nullable: true
         date nullable: true

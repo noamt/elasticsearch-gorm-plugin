@@ -270,7 +270,15 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
             customMappedProperties.put(name, propertyMapping)
         }
         //noinspection unchecked
-        propertyMapping.addAttributes((Map<String, Object>) ((Object[]) args)[0])
+        def attributes = (Map<String, Object>) ((Object[]) args)[0]
+        if(attributes?.containsKey('multi_field')){
+            boolean addUntouched = attributes.multi_field
+            attributes.remove('multi_field')
+            if(addUntouched){
+                attributes.fields = (LinkedHashMap<String, LinkedHashMap<String, String>>)(['untouched': ['type': 'keyword']]) // To preserve compatibility with ElasticSearchMappingFactory
+            }
+        }
+        propertyMapping.addAttributes(attributes)
         return null
     }
 

@@ -12,6 +12,7 @@ class Spaceship {
     static searchable = {
         captain component: 'inner'
         shipData dynamic: true
+        name multi_field: true
     }
 
     static mapping = {

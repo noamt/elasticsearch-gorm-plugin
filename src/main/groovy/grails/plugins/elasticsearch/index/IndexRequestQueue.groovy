@@ -287,7 +287,7 @@ class IndexRequestQueue {
             }
         }
 
-        void onFailure(Throwable e) {
+        void onFailure(Exception e) {
             // Everything failed. Re-push all.
             LOG.error('Bulk request failure', e)
             def remainingAttempts = attempts.getAndDecrement()

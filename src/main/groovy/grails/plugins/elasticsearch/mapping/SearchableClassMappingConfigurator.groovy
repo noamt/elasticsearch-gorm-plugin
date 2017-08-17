@@ -23,7 +23,7 @@ import org.grails.core.artefact.DomainClassArtefactHandler
 import grails.core.GrailsApplication
 import grails.core.GrailsClass
 import grails.core.GrailsDomainClass
-import org.elasticsearch.index.mapper.MergeMappingException
+import org.elasticsearch.indices.InvalidIndexTemplateException
 import org.elasticsearch.transport.RemoteTransportException
 import grails.plugins.elasticsearch.ElasticSearchAdminService
 import grails.plugins.elasticsearch.ElasticSearchContextHolder
@@ -143,7 +143,7 @@ class SearchableClassMappingConfigurator implements ElasticSearchConfigAware {
                     } catch (IllegalArgumentException e) {
                         LOG.warn("Could not install mapping ${scm.indexName}/${scm.elasticTypeName} due to ${e.message}, migrations needed")
                         mappingConflicts << new MappingConflict(scm: scm, exception: e)
-                    } catch (MergeMappingException e) {
+                    } catch (InvalidIndexTemplateException e) {
                         LOG.warn("Could not install mapping ${scm.indexName}/${scm.elasticTypeName} due to ${e.message}, migrations needed")
                         mappingConflicts << new MappingConflict(scm: scm, exception: e)
                     }
@@ -195,7 +195,9 @@ class SearchableClassMappingConfigurator implements ElasticSearchConfigAware {
             LOG.debug("Retrieved index settings")
             if (indexDefaults != null) {
                 for (Map.Entry<String, Object> entry : indexDefaults.entrySet()) {
-                    indexSettings.put("index." + entry.getKey(), entry.getValue())
+                    String key = entry.getKey();
+                    if(key == 'numberOfReplicas') key = 'number_of_replicas'
+                    indexSettings.put("index." + key, entry.getValue())
                 }
             }
         }
