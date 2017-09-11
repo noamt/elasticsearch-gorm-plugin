@@ -16,7 +16,7 @@ static searchable = {
 |===
 | Option Name | Values | Description
 
-| boost 
+| <<boostFactor, boost>>
 | Number 
 | A decimal boost value. With a positive value, promotes search results for hits in this property; with a negative value, demotes search results that hit this property.
 
@@ -69,6 +69,8 @@ static searchable = {
 | Only available for String properties. Determines whether this field should be dynamically mapped by elasticsearch.
 
 |===
+
+include::propertiesMapping/boost.adoc[]
 
 include::propertiesMapping/parentChild.adoc[]
 

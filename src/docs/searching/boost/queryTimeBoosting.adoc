@@ -1,0 +1,32 @@
+[[queryTimeBoosting]]
+==== Query Time Boosting
+
+To perform Query time boosting, we can provide boost factor in following ways
+
+*Example*
+
+[source, groovy]
+----
+elasticSearchService.search(QueryBuilders.boolQuery().should(QueryBuilders.matchQuery("tags", "Elasticsearch").boost(2.0f)).should(QueryBuilders.matchQuery("content", "Elasticsearch")), null, params)
+
+
+def result = elasticSearchService.search({
+               bool {
+                     should {
+                       match(content: 'elasticsearch')
+                     }
+                     should {
+                       match {
+                         tags(query: 'elasticsearch', boost: 2)
+                       }
+                     }
+                  }
+               }, null, [indices: Blog, types: Blog])
+----
+
+`boost` parameter applied at search time gives one query clause more importance than another.
+In above mentioned examples, the tags query clause is twice as important as the content query clause,
+because it has been boosted by a factor of 2.
+
+The boost is applied only for term queries (`prefix`, `range` and `fuzzy` queries are not boosted).
+

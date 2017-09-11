@@ -28,6 +28,7 @@ import org.grails.web.json.JSONObject
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Specification
 import test.*
+import test.boost.Blog
 import test.custom.id.Toy
 
 import java.math.RoundingMode
@@ -429,6 +430,91 @@ class ElasticSearchServiceIntegrationSpec extends Specification {
 
         then:
         !result.searchResults.empty
+    }
+
+    void 'Testing Index Time Boosting'() {
+        given: 'a bunch of blogs'
+
+        Blog blog1 = new Blog(title: "No Sql Databases", content: "Elasticsearch is a No Sql Database", tags: "Elasticsearch")
+        blog1.save(failOnError: true)
+        Blog blog2 = new Blog(title: "Basic Of Elasticsearch", content: "It is a search Engine", tags: "Elasticsearch")
+        blog2.save(failOnError: true)
+
+        elasticSearchService.index(blog1, blog2)
+        elasticSearchAdminService.refresh()
+
+        def params = [indices: Blog, types: Blog]
+        def query = {
+            match(_all: 'elasticsearch')
+        }
+
+        when: 'a search is performed'
+
+        def result = elasticSearchService.search(query, params)
+
+        then: 'Blog2 containing Elasticsearch in title should be scored more as title has ben given boost of 2 in mapping and should come on top'
+        result.total == 2
+        result.searchResults.size() == 2
+        result.searchResults*.title == ['Basic Of Elasticsearch', 'No Sql Databases']
+    }
+
+    void 'Testing Query Time Boosting Using QueryBuilders'() {
+        given: 'a bunch of blogs'
+
+        Blog blog1 = new Blog(title: "Open Source Languages", content: "Java, Python etc are open source languages.", tags: "open source")
+        blog1.save(failOnError: true)
+        Blog blog2 = new Blog(title: "Basics Of Java", content: "It is a high level language.", tags: "java")
+        blog2.save(failOnError: true)
+
+        elasticSearchService.index(blog1, blog2)
+        elasticSearchAdminService.refresh()
+
+        when: 'a search is performed'
+
+        def params = [indices: Blog, types: Blog]
+
+        def result = elasticSearchService.search(QueryBuilders.boolQuery().should(QueryBuilders.matchQuery("tags", "java").boost(2.0f))
+                .should(QueryBuilders.matchQuery("content", "java")), null, params)
+
+        then: 'Blog2 containing java in tag should be scored more(boost 2 has been provided to clause containing tag) and should come on top'
+        result.total == 2
+        result.searchResults.size() == 2
+        result.searchResults*.title == ['Basics Of Java', 'Open Source Languages']
+    }
+
+    void 'Testing Query Time Boosting Using closure'() {
+        given: 'a bunch of blogs'
+
+        Blog blog1 = new Blog(title: "Relational DB", content: "MySql , postgres are relational databases", tags: "relational, mysql, postgres")
+        blog1.save(failOnError: true)
+        Blog blog2 = new Blog(title: "Advantages of Postgres", content: "Postgres is now becoming more popular than mysql", tags: "postgres")
+        blog2.save(failOnError: true)
+
+        elasticSearchService.index(blog1, blog2)
+        elasticSearchAdminService.refresh()
+
+        when: 'a search is performed'
+
+        def params = [indices: Blog, types: Blog]
+        def query = {
+            bool {
+                should {
+                    match(content: 'mysql')
+                }
+
+                should {
+                    match {
+                        tags(query: 'mysql', boost: 2)
+                    }
+                }
+            }
+        }
+        def result = elasticSearchService.search(query, null, params)
+
+        then: 'Blog1 containing mysql in tag should be scored more(boost 2 has been provided to clause containing tag) and should come on top'
+        result.total == 2
+        result.searchResults.size() == 2
+        result.searchResults*.title == ['Relational DB', 'Advantages of Postgres']
     }
 
     void 'Paging and sorting through search results'() {
