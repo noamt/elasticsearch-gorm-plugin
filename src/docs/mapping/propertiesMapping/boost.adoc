@@ -1,0 +1,45 @@
+[[boostFactor]]
+==== Index Time Boosting
+
+Individual fields can be boosted automatically with the boost parameter as provided below.
+
+*Example*
+
+[source, groovy]
+----
+class Blog {
+
+    String title
+    String content
+
+    String tags
+
+    static searchable = {
+        title boost: 2.0
+    }
+}
+
+----
+
+
+Matches on the title field will have twice the weight as those on the content field, which has the default boost of 1.0.
+
+Mapping of Blog would be like
+[source, json]
+----
+{
+  "mappings": {
+    "blog": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "boost": 2
+        },
+        "content": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}
+----

@@ -1,0 +1,6 @@
+[[boosting]]
+=== Boosting
+
+Boosting is the main tool that you can use to tune relevance. Setting a boost of 2 doesn’t simply double the final _score; the actual boost value that is applied goes through normalization and some internal optimization. However, it does imply that a clause with a boost of 2 is twice as important as a clause with a boost of 1.
+
+include::boost/queryTimeBoosting.adoc[]
