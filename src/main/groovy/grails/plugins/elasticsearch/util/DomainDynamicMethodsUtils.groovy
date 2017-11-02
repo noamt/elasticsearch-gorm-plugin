@@ -41,9 +41,13 @@ class DomainDynamicMethodsUtils {
 
         for (GrailsDomainClass domain in grailsApplication.domainClasses) {
             String searchablePropertyName = getSearchablePropertyName(grailsApplication)
-            if (!domain.getPropertyValue(searchablePropertyName)) {
+            def searchableValue = domain.getPropertyValue(searchablePropertyName)
+            if(searchableValue == false || searchableValue == null) {
                 continue
             }
+            //if( !domain.getPropertyValue(searchablePropertyName)) {
+            //    continue
+            //}
 
             def domainCopy = domain
             // Only inject the methods if the domain is mapped as "root"

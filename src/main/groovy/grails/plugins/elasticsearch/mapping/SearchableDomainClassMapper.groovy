@@ -88,7 +88,7 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
 
         String searchablePropertyName = getSearchablePropertyName()
 
-        if (!grailsDomainClass.hasProperty(searchablePropertyName)) {
+        if(!grailsDomainClass.hasProperty(searchablePropertyName) || grailsDomainClass.getPropertyValue(searchablePropertyName).equals(Boolean.FALSE)) {
             return null
         }
         // Process inheritance.

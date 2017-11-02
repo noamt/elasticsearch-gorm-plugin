@@ -20,7 +20,7 @@ import org.elasticsearch.Version
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.InetSocketTransportAddress
-import org.elasticsearch.mapper.attachments.MapperAttachmentsPlugin
+//import org.elasticsearch.mapper.attachments.MapperAttachmentsPlugin
 import org.elasticsearch.node.Node
 import org.elasticsearch.plugins.Plugin
 import org.elasticsearch.transport.client.PreBuiltTransportClient
@@ -204,7 +204,7 @@ class ClientNodeFactoryBean implements FactoryBean {
         }
 
         // Avoiding this:
-        node = new PluginEnabledNode(settings, MapperAttachmentsPlugin)
+        node = new Node(settings.build()) //new PluginEnabledNode(settings, MapperAttachmentsPlugin)
         node.start()
         def client = node.client()
         // Wait for the cluster to become alive.
