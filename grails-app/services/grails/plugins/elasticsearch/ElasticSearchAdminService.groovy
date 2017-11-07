@@ -311,9 +311,10 @@ class ElasticSearchAdminService {
      */
     Set<String> getIndices() {
         elasticSearchHelper.withElasticSearch { Client client ->
-            Set indices = client.admin().indices().prepareStats().execute().actionGet().indices.keySet()
+            client.admin().indices().prepareStats().execute().actionGet().indices.keySet()
         }
     }
+
     /**
      * Returns all the indices starting with a prefix
      * @param prefix the prefix

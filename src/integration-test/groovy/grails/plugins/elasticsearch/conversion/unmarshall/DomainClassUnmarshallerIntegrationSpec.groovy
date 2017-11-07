@@ -3,7 +3,7 @@ package grails.plugins.elasticsearch.conversion.unmarshall
 import grails.core.GrailsApplication
 import grails.plugins.elasticsearch.ElasticSearchContextHolder
 import grails.plugins.elasticsearch.exception.MappingException
-import grails.test.mixin.integration.Integration
+import grails.testing.mixin.integration.Integration
 import org.elasticsearch.common.bytes.BytesArray
 import org.elasticsearch.common.text.Text
 import org.elasticsearch.search.SearchHit

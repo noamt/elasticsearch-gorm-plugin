@@ -14,11 +14,11 @@ class SearchableClassMappingSpec extends Specification {
 
     def "indexing and querying index are calculated based on the index name"() {
         given:
-        def domainClass = Mock(GrailsDomainClass)
+        def domainClass = Mock(DomainEntity)
         domainClass.getPackageName() >> packageName
 
         when:
-        SearchableClassMapping scm = new SearchableClassMapping(domainClass, [])
+        SearchableClassMapping scm = new SearchableClassMapping(null, domainClass, [])
 
         then:
         scm.indexName == packageName

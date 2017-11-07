@@ -15,6 +15,9 @@
  */
 package grails.plugins.elasticsearch
 
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+
 import grails.plugins.elasticsearch.index.IndexRequestQueue
 import org.grails.datastore.mapping.core.Datastore
 import org.grails.datastore.mapping.engine.event.*
@@ -27,6 +30,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 /**
  * Listen to GORM events.
  */
+@CompileStatic
 class AuditEventListener extends AbstractPersistenceEventListener {
 
     private static final Logger logger = LoggerFactory.getLogger(this)
@@ -60,6 +64,7 @@ class AuditEventListener extends AbstractPersistenceEventListener {
     /**
      * Push object to index. Save as pending if transaction is not committed yet.
      */
+    @CompileDynamic
     void pushToIndex(entity) {
         // Register transaction synchronization
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -83,6 +88,7 @@ class AuditEventListener extends AbstractPersistenceEventListener {
         }
     }
 
+    @CompileDynamic
     void pushToDelete(entity) {
         // Register transaction synchronization
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -185,6 +191,7 @@ class AuditEventListener extends AbstractPersistenceEventListener {
      * @param entity the entity being modified
      * @return Set of zero or more root indexed entities
      */
+    @CompileDynamic
     Set getRootIndexedEntity(entity) {
         Set roots = []
 

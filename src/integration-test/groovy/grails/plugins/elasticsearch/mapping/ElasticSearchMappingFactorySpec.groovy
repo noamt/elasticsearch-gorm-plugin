@@ -2,7 +2,7 @@ package grails.plugins.elasticsearch.mapping
 
 import grails.core.GrailsApplication
 import grails.plugins.elasticsearch.ElasticSearchContextHolder
-import grails.test.mixin.integration.Integration
+import grails.testing.mixin.integration.Integration
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Specification
 import spock.lang.Unroll

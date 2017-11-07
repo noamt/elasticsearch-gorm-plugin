@@ -15,10 +15,15 @@
  */
 package grails.plugins.elasticsearch.util
 
-import grails.core.GrailsDomainClass
+import grails.core.GrailsApplication
+import grails.plugins.elasticsearch.mapping.DomainEntity
+import grails.plugins.elasticsearch.mapping.DomainReflectionService
 import grails.plugins.elasticsearch.ElasticSearchContextHolder
 import grails.plugins.elasticsearch.ElasticSearchService
 import grails.plugins.elasticsearch.mapping.SearchableClassMapping
+
+import org.springframework.context.ApplicationContext
+
 import org.apache.commons.logging.LogFactory
 import grails.plugins.elasticsearch.exception.IndexException
 import org.elasticsearch.index.query.QueryBuilder
@@ -35,159 +40,160 @@ class DomainDynamicMethodsUtils {
      * @param applicationContext
      * @return
      */
-    static injectDynamicMethods(grailsApplication, applicationContext) {
-        def elasticSearchService = applicationContext.getBean(ElasticSearchService)
-        def elasticSearchContextHolder = applicationContext.getBean(ElasticSearchContextHolder)
+    static injectDynamicMethods(GrailsApplication grailsApplication, ApplicationContext applicationContext) {
+        ElasticSearchService elasticSearchService = applicationContext.getBean(ElasticSearchService)
+        ElasticSearchContextHolder elasticSearchContextHolder = applicationContext.getBean(ElasticSearchContextHolder)
 
-        for (GrailsDomainClass domain in grailsApplication.domainClasses) {
+        DomainReflectionService domainEntityService = applicationContext.getBean(DomainReflectionService)
+
+        for (DomainEntity domain in domainEntityService.domainEntities) {
             String searchablePropertyName = getSearchablePropertyName(grailsApplication)
-            if (!domain.getPropertyValue(searchablePropertyName)) {
-                continue
-            }
+
+            if (!domain.getInitialPropertyValue(searchablePropertyName)) continue
 
             def domainCopy = domain
             // Only inject the methods if the domain is mapped as "root"
-            if (!elasticSearchContextHolder.getMappingContext(domainCopy)?.root) {
-                continue
-            }
             SearchableClassMapping scm = elasticSearchContextHolder.getMappingContext(domainCopy)
-            def indexAndType = [indices: scm.queryingIndex, types: domainCopy.clazz]
+            if (!scm || !scm.root) continue
 
-			String searchMethodName = grailsApplication.config.elasticSearch.searchMethodName ?: 'search'
-			String countHitsMethodName = grailsApplication.config.elasticSearch.countHitsMethodName ?: 'countHits'
+            def indexAndType = [indices: scm.queryingIndex, types: domainCopy.type]
+
+			String searchMethodName = grailsApplication.config.getProperty('elasticSearch.searchMethodName', String, 'search')
+			String countHitsMethodName = grailsApplication.config.getProperty('elasticSearch.countHitsMethodName', String, 'countHits')
 
             // Inject the search method
-            domain.metaClass.'static'."$searchMethodName" << { String q, Map params = [:] ->
+            domain.delegateMetaClass.static."$searchMethodName" << { String q, Map params = [:] ->
                 elasticSearchService.search(q, params + indexAndType)
             }
-            domain.metaClass.'static'."$searchMethodName" << { Map params = [:], Closure q ->
+            domain.delegateMetaClass.static."$searchMethodName" << { Map params = [:], Closure q ->
                 elasticSearchService.search(params + indexAndType, q)
             }
-            domain.metaClass.'static'."$searchMethodName" << { Closure q, Map params = [:] ->
+            domain.delegateMetaClass.static."$searchMethodName" << { Closure q, Map params = [:] ->
                 elasticSearchService.search(params + indexAndType, q)
             }
-            domain.metaClass.'static'."$searchMethodName" << { Closure q, Closure f, Map params = [:] ->
+            domain.delegateMetaClass.static."$searchMethodName" << { Closure q, Closure f, Map params = [:] ->
                 elasticSearchService.search(q, f, params + indexAndType)
             }
-            domain.metaClass.'static'."$searchMethodName" << { Map params, Closure q, Closure f ->
+            domain.delegateMetaClass.static."$searchMethodName" << { Map params, Closure q, Closure f ->
                 elasticSearchService.search(params + indexAndType, q, f)
             }
-            domain.metaClass.'static'."$searchMethodName" << { Map params, QueryBuilder q, Closure f = null->
+            domain.delegateMetaClass.static."$searchMethodName" << { Map params, QueryBuilder q, Closure f = null->
                 elasticSearchService.search(params + indexAndType, q, f)
             }
-            domain.metaClass.'static'."$searchMethodName" << { QueryBuilder q, Closure f = null, Map params = [:] ->
+            domain.delegateMetaClass.static."$searchMethodName" << { QueryBuilder q, Closure f = null, Map params = [:] ->
                 elasticSearchService.search(q, f, params + indexAndType)
             }
-            domain.metaClass.'static'."$searchMethodName" << { Closure q, f, Map params = [:] ->
+            domain.delegateMetaClass.static."$searchMethodName" << { Closure q, f, Map params = [:] ->
                 elasticSearchService.search(q, f, params + indexAndType)
             }
-            domain.metaClass.'static'."$searchMethodName" << { Map params, Closure q, f ->
+            domain.delegateMetaClass.static."$searchMethodName" << { Map params, Closure q, f ->
                 elasticSearchService.search(params + indexAndType, q, f)
             }
-            domain.metaClass.'static'."$searchMethodName" << { Map params, QueryBuilder q, f = null->
+            domain.delegateMetaClass.static."$searchMethodName" << { Map params, QueryBuilder q, f = null->
                 elasticSearchService.search(params + indexAndType, q, f)
             }
-            domain.metaClass.'static'."$searchMethodName" << { QueryBuilder q, f = null, Map params = [:] ->
+            domain.delegateMetaClass.static."$searchMethodName" << { QueryBuilder q, f = null, Map params = [:] ->
                 elasticSearchService.search(q, f, params + indexAndType)
             }
-			domain.metaClass.'static'."$searchMethodName" << { Map params, QueryBuilder q, QueryBuilder f ->
+			domain.delegateMetaClass.static."$searchMethodName" << { Map params, QueryBuilder q, QueryBuilder f ->
 				elasticSearchService.search(params + indexAndType, q, f)
 			}
-			domain.metaClass.'static'."$searchMethodName" << { QueryBuilder q, QueryBuilder f, Map params = [:] ->
+			domain.delegateMetaClass.static."$searchMethodName" << { QueryBuilder q, QueryBuilder f, Map params = [:] ->
 				elasticSearchService.search(q, f, params + indexAndType)
 			}
 
             // Inject the countHits method
-            domain.metaClass.'static'."$countHitsMethodName" << { String q, Map params = [:] ->
+            domain.delegateMetaClass.static."$countHitsMethodName" << { String q, Map params = [:] ->
                 elasticSearchService.countHits(q, params + indexAndType)
             }
-            domain.metaClass.'static'."$countHitsMethodName" << { Map params = [:], Closure q ->
+            domain.delegateMetaClass.static."$countHitsMethodName" << { Map params = [:], Closure q ->
                 elasticSearchService.countHits(params + indexAndType, q)
             }
-            domain.metaClass.'static'."$countHitsMethodName" << { Closure q, Map params = [:] ->
+            domain.delegateMetaClass.static."$countHitsMethodName" << { Closure q, Map params = [:] ->
                 elasticSearchService.countHits(params + indexAndType, q)
             }
 
             // Inject the search method
-            domain.metaClass.static."$searchMethodName" << { String q, Map params = [:] ->
+            domain.delegateMetaClass.static."$searchMethodName" << { String q, Map params = [:] ->
                 elasticSearchService.search(q, params + indexAndType)
             }
-            domain.metaClass.static."$searchMethodName" << { Map params = [:], Closure q ->
+            domain.delegateMetaClass.static."$searchMethodName" << { Map params = [:], Closure q ->
                 elasticSearchService.search(params + indexAndType, q)
             }
-            domain.metaClass.static."$searchMethodName" << { Closure q, Map params = [:] ->
+            domain.delegateMetaClass.static."$searchMethodName" << { Closure q, Map params = [:] ->
                 elasticSearchService.search(params + indexAndType, q)
             }
 
             // Inject the countHits method
-            domain.metaClass.static."$countHitsMethodName" << { String q, Map params = [:] ->
+            domain.delegateMetaClass.static."$countHitsMethodName" << { String q, Map params = [:] ->
                 elasticSearchService.countHits(q, params + indexAndType)
             }
-            domain.metaClass.static."$countHitsMethodName" << { Map params = [:], Closure q ->
+            domain.delegateMetaClass.static."$countHitsMethodName" << { Map params = [:], Closure q ->
                 elasticSearchService.countHits(params + indexAndType, q)
             }
-            domain.metaClass.static."$countHitsMethodName" << { Closure q, Map params = [:] ->
+            domain.delegateMetaClass.static."$countHitsMethodName" << { Closure q, Map params = [:] ->
                 elasticSearchService.countHits(params + indexAndType, q)
             }
 
             // Inject the index method
             // static index() with no arguments index every instances of the domainClass
-            domain.metaClass.static.index << { ->
-                elasticSearchService.index(class: domainCopy.clazz)
+            domain.delegateMetaClass.static.index << { ->
+                elasticSearchService.index(class: domainCopy.type)
             }
             // static index( domainInstances ) index every instances specified as arguments
-            domain.metaClass.static.index << { Collection<GroovyObject> instances ->
+            domain.delegateMetaClass.static.index << { Collection<GroovyObject> instances ->
                 def invalidTypes = instances.any { inst ->
-                    inst.class != domainCopy.clazz
+                    inst.class != domainCopy.type
                 }
                 if (!invalidTypes) {
                     elasticSearchService.index(instances)
                 } else {
-                    throw new IndexException("[${domainCopy.propertyName}] index() method can only be applied its own type. Please use the elasticSearchService if you want to index mixed values.")
+                    throw new IndexException("[${domainCopy.defaultPropertyName}] index() method can only be applied its own type. Please use the elasticSearchService if you want to index mixed values.")
                 }
             }
             // static index( domainInstances ) index every instances specified as arguments (ellipsis styled)
-            domain.metaClass.static.index << { GroovyObject... instances ->
-                delegate.metaClass.invokeStaticMethod(domainCopy.clazz, 'index', instances as Collection<GroovyObject>)
+            domain.delegateMetaClass.static.index << { GroovyObject... instances ->
+                delegate.metaClass.invokeStaticMethod(domainCopy.type, 'index', instances as Collection<GroovyObject>)
             }
             // index() method on domain instance
-            domain.metaClass.index << {
+            domain.delegateMetaClass.index << {
                 elasticSearchService.index(delegate)
             }
 
             // Inject the unindex method
             // static unindex() with no arguments unindex every instances of the domainClass
-            domain.metaClass.static.unindex << { ->
+            domain.delegateMetaClass.static.unindex << { ->
                 elasticSearchService.unindex(class: domainCopy.clazz)
             }
             // static unindex( domainInstances ) unindex every instances specified as arguments
-            domain.metaClass.static.unindex << { Collection<GroovyObject> instances ->
+            domain.delegateMetaClass.static.unindex << { Collection<GroovyObject> instances ->
                 def invalidTypes = instances.any { inst ->
-                    inst.class != domainCopy.clazz
+                    inst.class != domainCopy.type
                 }
                 if (!invalidTypes) {
                     elasticSearchService.unindex(instances)
                 } else {
-                    throw new IndexException("[${domainCopy.propertyName}] unindex() method can only be applied on its own type. Please use the elasticSearchService if you want to unindex mixed values.")
+                    throw new IndexException("[${domainCopy.defaultPropertyName}] unindex() method can only be applied on its own type. Please use the elasticSearchService if you want to unindex mixed values.")
                 }
             }
             // static unindex( domainInstances ) unindex every instances specified as arguments (ellipsis styled)
-            domain.metaClass.static.unindex << { GroovyObject... instances ->
-                delegate.metaClass.invokeStaticMethod(domainCopy.clazz, 'unindex', instances as Collection<GroovyObject>)
+            domain.delegateMetaClass.static.unindex << { GroovyObject... instances ->
+                delegate.metaClass.invokeStaticMethod(domainCopy.type, 'unindex', instances as Collection<GroovyObject>)
             }
             // unindex() method on domain instance
-            domain.metaClass.unindex << {
+            domain.delegateMetaClass.unindex << {
                 elasticSearchService.unindex(delegate)
             }
         }
     }
 
-    private static String getSearchablePropertyName(grailsApplication) {
-        String searchablePropertyName = grailsApplication.config.elasticSearch.searchableProperty.name
+    private static String getSearchablePropertyName(GrailsApplication grailsApplication) {
+        String searchablePropertyName = grailsApplication.config.getProperty('elasticSearch.searchableProperty.name', String)
 
         if (searchablePropertyName) {
             return searchablePropertyName
         }
+
         //Maintain backwards compatibility. Searchable property name may not be defined
         'searchable'
     }

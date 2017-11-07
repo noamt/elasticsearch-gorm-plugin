@@ -6,7 +6,7 @@ import grails.plugins.elasticsearch.ElasticSearchBootStrapHelper
 import grails.plugins.elasticsearch.ElasticSearchContextHolder
 import grails.plugins.elasticsearch.ElasticSearchService
 import grails.plugins.elasticsearch.exception.MappingException
-import grails.test.mixin.integration.Integration
+import grails.testing.mixin.integration.Integration
 import grails.transaction.Rollback
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Specification
@@ -31,10 +31,9 @@ class MappingMigrationSpec extends Specification {
         elasticSearchAdminService
     }
 
-    void setup() {
-        es.getIndices().each {
-            es.deleteIndex(it)
-        }
+    void setupMappings() {
+        es.deleteIndex()
+
         // Recreate a clean environment as if the app had just booted
         grailsApplication.config.elasticSearch.migration = [strategy: "none"]
         grailsApplication.config.elasticSearch.bulkIndexOnStartup = false
@@ -49,6 +48,7 @@ class MappingMigrationSpec extends Specification {
 
     void "An index is created when nothing exists"() {
         given: "That an index does not exist"
+        setupMappings()
         es.deleteIndex catalogMapping.indexName
 
         and: "Alias Configuration"
@@ -74,6 +74,7 @@ class MappingMigrationSpec extends Specification {
 
     void "Read and Write aliases are created when none exist"() {
         given: "An index without read and write aliases"
+        setupMappings()
         es.deleteAlias(catalogMapping.indexingIndex)
         es.deleteAlias(catalogMapping.queryingIndex)
 
@@ -93,8 +94,8 @@ class MappingMigrationSpec extends Specification {
     }
 
     void "when there's a conflict and no strategy is selected an exception is thrown"() {
-
         given: "A Conflicting Catalog mapping (with nested as opposed to inner pages)"
+        setupMappings()
         //Delete existing Mapping
         es.deleteIndex catalogMapping.indexName
         //Create conflicting Mapping
@@ -123,8 +124,8 @@ class MappingMigrationSpec extends Specification {
      */
 
     void "when there is a conflict and strategy is 'delete' an exception is thrown"() {
-
         given: "A Conflicting Catalog mapping (with nested as opposed to inner pages)"
+        setupMappings()
         //Delete existing Mapping
         es.deleteIndex catalogMapping.indexName
         //Create conflicting Mapping
@@ -154,8 +155,8 @@ class MappingMigrationSpec extends Specification {
      */
 
     void "when there is a conflict and strategy is 'deleteIndex' content is deleted"() {
-
         given: "A Conflicting Catalog mapping (with nested as opposed to inner pages)"
+        setupMappings()
         //Delete existing Mapping
         es.deleteIndex catalogMapping.indexName
         //Create conflicting Mapping
@@ -212,8 +213,8 @@ class MappingMigrationSpec extends Specification {
     }
 
     void "delete on alias throws Exception because delete is deprecated"() {
-
         given: "An alias pointing to a versioned index"
+        setupMappings()
         es.deleteIndex catalogMapping.indexName
         es.createIndex catalogMapping.indexName, 0
         es.pointAliasTo catalogMapping.indexName, catalogMapping.indexName, 0
@@ -242,8 +243,8 @@ class MappingMigrationSpec extends Specification {
     }
 
     void "deleteIndex works on alias as well"() {
-
         given: "An alias pointing to a versioned index"
+        setupMappings()
         es.deleteIndex catalogMapping.indexName
         es.createIndex catalogMapping.indexName, 0
         es.pointAliasTo catalogMapping.indexName, catalogMapping.indexName, 0
@@ -309,6 +310,7 @@ class MappingMigrationSpec extends Specification {
 
     void "With 'alias' strategy an index and an alias are created when none exist"() {
         given: "That an index does not exist"
+        setupMappings()
         es.deleteIndex catalogMapping.indexName
 
         and: "Alias Configuration"
@@ -330,6 +332,7 @@ class MappingMigrationSpec extends Specification {
 
     void "With 'alias' strategy if alias exist, the next one is created"() {
         given: "A range of previously created versions"
+        setupMappings()
         es.deleteIndex catalogMapping.indexName
         (0..10).each {
             es.createIndex catalogMapping.indexName, it
@@ -380,6 +383,7 @@ class MappingMigrationSpec extends Specification {
 
     void "With 'alias' strategy if index exists, decide whether to replace with alias based on config"() {
         given: "Two different mapping conflicts on the same index"
+        setupMappings()
         assert catalogMapping != itemMapping
         assert catalogMapping.indexName == itemMapping.indexName
         //Delete previous index
@@ -456,8 +460,8 @@ class MappingMigrationSpec extends Specification {
      * Minimise Downtime for Index to Alias
      */
     void "Alias -> Alias : If configuration says to recreate the content, there is zero downtime"() {
-
         given: "An existing Alias"
+        setupMappings()
         es.deleteIndex catalogMapping.indexName
         es.createIndex catalogMapping.indexName, 0
         es.pointAliasTo catalogMapping.indexName, catalogMapping.indexName, 0

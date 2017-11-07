@@ -15,8 +15,6 @@
  */
 package grails.plugins.elasticsearch.mapping
 
-import grails.core.GrailsDomainClass
-import grails.core.GrailsDomainClassProperty
 import grails.plugins.GrailsPluginManager
 import grails.util.GrailsNameUtils
 import grails.util.Holders
@@ -51,14 +49,15 @@ class ElasticSearchMappingFactory {
         Map mappingFields = [properties: getMappingProperties(scm)]
 
         if (scm.@all instanceof Map) {
-            mappingFields.'_all' = scm.@all as Map
+            mappingFields.put('_all', scm.@all as Map)
         }
-        if (!scm.isAll())
-            mappingFields.'_all' = Collections.singletonMap('enabled', false)
+        if (!scm.isAll()) {
+            mappingFields.put('_all', [enabled: false] as Map)
+        }
 
         SearchableClassPropertyMapping parentProperty = scm.propertiesMapping.find { it.parent }
         if (parentProperty) {
-            mappingFields.'_parent' = [type: GrailsNameUtils.getPropertyName(parentProperty.grailsProperty.type)]
+            mappingFields.put('_parent', [type: GrailsNameUtils.getPropertyName(parentProperty.grailsProperty.type)] as Map)
         }
 
         Map<String, Object> mapping = [:]
@@ -100,8 +99,8 @@ class ElasticSearchMappingFactory {
                         props = [:]
                         propOptions.properties = props
                     }
-                    GrailsDomainClass referencedDomainClass = scpm.grailsProperty.getReferencedDomainClass() ?: scpm.getComponentPropertyMapping().domainClass
-                    GrailsDomainClassProperty idProperty = referencedDomainClass.getPropertyByName('id')
+                    DomainEntity referencedDomainClass = scpm.grailsProperty.getReferencedDomainEntity() ?: scpm.getComponentPropertyMapping().domainClass
+                    DomainProperty idProperty = referencedDomainClass.getPropertyByName('id')
                     String idType = idProperty.getTypePropertyName()
 
                     if (idTypeIsMongoObjectId(idType)) {
@@ -154,21 +153,25 @@ class ElasticSearchMappingFactory {
     }
 
     private static String getElasticType(SearchableClassPropertyMapping scpm) {
-        String propType = null
+        String propType
 
         if (scpm.isGeoPoint()) {
             propType = 'geo_point'
         } else if (scpm.isAttachment()) {
             propType = 'attachment'
         } else {
-            propType = scpm.grailsProperty.getTypePropertyName()
+            DomainProperty property = scpm.grailsProperty
+
+            propType = property.typePropertyName
 
             //Preprocess collections and arrays to work with it's element types
-            Class referencedPropertyType = scpm.grailsProperty.getReferencedPropertyType()
+            Class referencedPropertyType = property.referencedPropertyType
+
             if (Collection.isAssignableFrom(referencedPropertyType) || referencedPropertyType.isArray()) {
                 //Handle collections explictly mapped (needed for dealing with transients)
-                if (scpm.grailsProperty.domainClass.associationMap[scpm.grailsProperty.name]) {
-                    referencedPropertyType = scpm.grailsProperty.domainClass.associationMap[scpm.grailsProperty.name]
+                Class<?> associationClass = property.getAssociationType()
+                if (associationClass) {
+                    referencedPropertyType = associationClass
                 }
                 if (referencedPropertyType.isArray()) {
                     referencedPropertyType = referencedPropertyType.getComponentType()

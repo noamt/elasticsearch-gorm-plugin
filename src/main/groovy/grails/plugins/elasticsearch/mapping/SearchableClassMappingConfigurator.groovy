@@ -18,11 +18,9 @@ package grails.plugins.elasticsearch.mapping
 
 import grails.plugins.elasticsearch.util.ElasticSearchConfigAware
 import groovy.transform.CompileStatic
+
 import org.elasticsearch.cluster.health.ClusterHealthStatus
-import org.grails.core.artefact.DomainClassArtefactHandler
 import grails.core.GrailsApplication
-import grails.core.GrailsClass
-import grails.core.GrailsDomainClass
 import org.elasticsearch.indices.InvalidIndexTemplateException
 import org.elasticsearch.transport.RemoteTransportException
 import grails.plugins.elasticsearch.ElasticSearchAdminService
@@ -30,7 +28,6 @@ import grails.plugins.elasticsearch.ElasticSearchContextHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static grails.plugins.elasticsearch.mapping.MappingMigrationStrategy.*
 import static grails.plugins.elasticsearch.util.IndexNamingUtils.indexingIndexFor
 import static grails.plugins.elasticsearch.util.IndexNamingUtils.queryingIndexFor
 
@@ -48,40 +45,42 @@ class SearchableClassMappingConfigurator implements ElasticSearchConfigAware {
     ElasticSearchAdminService es
     MappingMigrationManager mmm
 
+    DomainReflectionService domainReflectionService
+
     /**
      * Init method.
      */
-    public void configureAndInstallMappings() {
-        Collection<SearchableClassMapping> mappings = mappings()
+    void configureAndInstallMappings() {
+        def domainClasses = domainReflectionService.getDomainEntities()
+        Collection<SearchableClassMapping> mappings = mappings(domainClasses)
         installMappings(mappings)
     }
 
-    public Collection<SearchableClassMapping> mappings() {
+    List<SearchableClassMapping> mappings(Collection<DomainEntity> domainClasses) {
         // TODO: Not able to reflect changes in config if we use instance field config in SearchableDomainClassMapper constructor
         List<SearchableClassMapping> mappings = []
-        for (GrailsClass clazz : grailsApplication.getArtefacts(DomainClassArtefactHandler.TYPE)) {
-            GrailsDomainClass domainClass = (GrailsDomainClass) clazz
-            SearchableDomainClassMapper mapper = new SearchableDomainClassMapper(grailsApplication, domainClass, esConfig)
+        for (DomainEntity domainClass : domainClasses) {
+            SearchableDomainClassMapper mapper = domainReflectionService.createDomainClassMapper(domainClass)
             SearchableClassMapping searchableClassMapping = mapper.buildClassMapping()
-            if (searchableClassMapping != null) {
-                elasticSearchContext.addMappingContext(searchableClassMapping)
-                mappings.add(searchableClassMapping)
+            if (searchableClassMapping == null) {
+                LOG.debug("Could not build SearchableClassMapping for ${domainClass}")
+                continue
             }
+
+            elasticSearchContext.addMappingContext(searchableClassMapping)
+            mappings.add(searchableClassMapping)
         }
 
         // Inject cross-referenced component mappings.
         for (SearchableClassMapping scm : mappings) {
             for (SearchableClassPropertyMapping scpm : scm.getPropertiesMapping()) {
-                LOG.debug("\n\n\n\n")
-                LOG.debug(scpm.dump())
-                LOG.debug("\n\n\n\n")
-                if (scpm.isComponent() && scpm.getGrailsProperty().isPersistent()) {
-                    Class<?> componentType = scpm.getGrailsProperty().getReferencedPropertyType()
-                    scpm.setComponentPropertyMapping(elasticSearchContext.getMappingContextByType(componentType))
+                DomainProperty property = scpm.grailsProperty
+                if (scpm.isComponent() && property.isPersistent()) {
+                    Class<?> componentType = property.getReferencedPropertyType()
+                    scpm.componentPropertyMapping = elasticSearchContext.getMappingContextByType(componentType)
                 } else if(scpm.isComponent()) {
-                    Class<?> componentType = scpm.getGrailsProperty().getDomainClass().getRelatedClassType(scpm.propertyName)
-                    scpm.setComponentPropertyMapping(elasticSearchContext.getMappingContextByType(componentType))
-
+                    Class<?> componentType = property.getDomainEntity().getRelatedClassType(scpm.propertyName)
+                    scpm.componentPropertyMapping = elasticSearchContext.getMappingContextByType(componentType)
                 }
             }
         }
@@ -98,7 +97,7 @@ class SearchableClassMappingConfigurator implements ElasticSearchConfigAware {
      * Resolve the ElasticSearch mapping from the static "searchable" property (closure or boolean) in domain classes
      * @param mappings searchable class mappings to be install.
      */
-    public void installMappings(Collection<SearchableClassMapping> mappings){
+    void installMappings(Collection<SearchableClassMapping> mappings){
         Map<String, Object> indexSettings = buildIndexSettings()
 
         LOG.debug("Index settings are " + indexSettings)
@@ -107,7 +106,8 @@ class SearchableClassMappingConfigurator implements ElasticSearchConfigAware {
         Map<SearchableClassMapping, Map> elasticMappings = buildElasticMappings(mappings)
         LOG.debug "elasticMappings are ${elasticMappings.keySet()}"
 
-        MappingMigrationStrategy migrationStrategy = migrationConfig?.strategy ? MappingMigrationStrategy.valueOf(migrationConfig?.strategy as String) : none
+        String strategyName = migrationConfig?.strategy as String ?: "none"
+        MappingMigrationStrategy migrationStrategy = MappingMigrationStrategy.valueOf(strategyName)
         def mappingConflicts = []
 
         Set<String> indices = mappings.findAll { it.isRoot() }.collect { it.indexName } as Set<String>
@@ -176,7 +176,7 @@ class SearchableClassMappingConfigurator implements ElasticSearchConfigAware {
         es.waitForClusterStatus(ClusterHealthStatus.YELLOW)
         if(!es.indexExists(indexName)) {
             LOG.debug("Index ${indexName} does not exists, initiating creation...")
-            if (strategy == alias) {
+            if (strategy == MappingMigrationStrategy.alias) {
                 def nextVersion = es.getNextVersion indexName
                 es.createIndex indexName, nextVersion, indexSettings, esMappings
                 es.pointAliasTo indexName, indexName, nextVersion

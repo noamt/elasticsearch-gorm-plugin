@@ -11,7 +11,8 @@ class MappingConflict {
     SearchableClassMapping scm
     Exception exception
 
-    public String toString() {
+    String toString() {
         "Conflict on ${scm.indexName}/${scm.elasticTypeName}, due to '${exception.message}'"
     }
+
 }

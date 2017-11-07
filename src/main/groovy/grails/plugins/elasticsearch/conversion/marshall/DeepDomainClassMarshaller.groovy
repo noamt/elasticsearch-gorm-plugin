@@ -3,17 +3,20 @@ package grails.plugins.elasticsearch.conversion.marshall
 import grails.core.GrailsDomainClass
 import grails.core.GrailsDomainClassProperty
 import org.grails.core.artefact.DomainClassArtefactHandler
+import grails.plugins.elasticsearch.mapping.DomainEntity
+import grails.plugins.elasticsearch.mapping.DomainProperty
+
 
 class DeepDomainClassMarshaller extends DefaultMarshaller {
     protected doMarshall(instance) {
         def domainClass = getDomainClass(instance)
         // don't use instance class directly, instead unwrap from javaassist
-        def marshallResult = [id: instance.id, 'class': domainClass.clazz.name]
+        def marshallResult = [id: instance.id, 'class': domainClass.type.name]
         def scm = elasticSearchContextHolder.getMappingContext(domainClass)
         if (!scm) {
             throw new IllegalStateException("Domain class ${domainClass} is not searchable.")
         }
-        for (GrailsDomainClassProperty prop in domainClass.getProperties()) {
+        for (DomainProperty prop in domainClass.getProperties()) {
             def propertyMapping = scm.getPropertyMapping(prop.name)
             if (!propertyMapping) {
                 continue
@@ -23,7 +26,7 @@ class DeepDomainClassMarshaller extends DefaultMarshaller {
             def propertyValue = instance."${prop.name}"
 
             // Domain marshalling
-            if (DomainClassArtefactHandler.isDomainClass(propertyClass)) {
+            if (isDomainClass(propertyClass)) {
                 String searchablePropertyName = getSearchablePropertyName()
                 if (propertyValue.class."$searchablePropertyName") {
                     // todo fixme - will throw exception when no searchable field.
@@ -56,9 +59,14 @@ class DeepDomainClassMarshaller extends DefaultMarshaller {
         return []
     }
 
-    private GrailsDomainClass getDomainClass(instance) {
-        def instanceClass = domainClassUnWrapperChain.unwrap(instance).class
-        grailsApplication.domainClasses.find { it.clazz == instanceClass }
+    // TODO: Fix this smell
+    private DomainEntity getDomainClass(Object instance) {
+        marshallingContext.parentFactory.getUnwrappedInstanceDomainClass(instance)
+    }
+
+    // TODO: Fix this smell
+    boolean isDomainClass(Class<?> clazz) {
+        marshallingContext.parentFactory.isDomainClass(clazz)
     }
 
     private String getSearchablePropertyName() {

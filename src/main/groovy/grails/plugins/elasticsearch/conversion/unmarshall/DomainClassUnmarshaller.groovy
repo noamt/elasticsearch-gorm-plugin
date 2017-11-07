@@ -23,6 +23,8 @@ import grails.core.GrailsDomainClass
 import grails.core.GrailsDomainClassProperty
 import grails.plugins.elasticsearch.ElasticSearchContextHolder
 import grails.plugins.elasticsearch.exception.MappingException
+import grails.plugins.elasticsearch.mapping.DomainEntity
+import grails.plugins.elasticsearch.mapping.DomainProperty
 import grails.plugins.elasticsearch.mapping.SearchableClassMapping
 import grails.plugins.elasticsearch.mapping.SearchableClassPropertyMapping
 import grails.web.databinding.DataBinder
@@ -66,9 +68,9 @@ class DomainClassUnmarshaller implements DataBinder {
                 continue
             }
 
-            GrailsDomainClassProperty identifier = scm.domainClass.identifier
+            DomainProperty identifier = scm.domainClass.identifier
             Object id = typeConverter.convertIfNecessary(hit.id(), identifier.type)
-            GroovyObject instance = (GroovyObject) scm.domainClass.newInstance()
+            GroovyObject instance = (GroovyObject) scm.domainClass.type.newInstance()
             instance.setProperty(identifier.name, id)
 
             def aliasFields = elasticSearchContextHolder.getMappingContext(scm.domainClass).getPropertiesMapping().findResults {
@@ -90,9 +92,9 @@ class DomainClassUnmarshaller implements DataBinder {
                     rebuiltProperties[key] = unmarshalledProperty
                     populateCyclicReference(instance, rebuiltProperties, unmarshallingContext)
                 } catch (MappingException e) {
-                    LOG.debug("Error unmarshalling property '$key' of Class ${scm.domainClass.name} with id $id", e)
+                    LOG.debug("Error unmarshalling property '$key' of Class ${scm.domainClass.type.name} with id $id", e)
                 } catch (Throwable t) {
-                    LOG.error("Error unmarshalling property '$key' of Class ${scm.domainClass.name} with id $id", t)
+                    LOG.error("Error unmarshalling property '$key' of Class ${scm.domainClass.type.name} with id $id", t)
                 } finally {
                     unmarshallingContext.resetContext()
                 }
@@ -164,13 +166,13 @@ class DomainClassUnmarshaller implements DataBinder {
         }
     }
 
-    private unmarshallProperty(GrailsDomainClass domainClass, String propertyName, propertyValue, DefaultUnmarshallingContext unmarshallingContext) {
+    private unmarshallProperty(DomainEntity domainClass, String propertyName, propertyValue, DefaultUnmarshallingContext unmarshallingContext) {
         // TODO : adapt behavior if the mapping option "component" or "reference" are set
         // below is considering the "component" behavior
         SearchableClassPropertyMapping scpm = elasticSearchContextHolder.getMappingContext(domainClass).getPropertyMapping(propertyName)
         Object parseResult
-        if (null == scpm) {
-            throw new MappingException("Property ${domainClass.name}.${propertyName} found in index, but is not defined as searchable.")
+        if (scpm == null) {
+            throw new MappingException("Property ${domainClass.type.simpleName}.${propertyName} found in index, but is not defined as searchable.")
         }
 
         if (scpm?.dynamic && null != propertyValue) {
@@ -188,13 +190,7 @@ class DomainClassUnmarshaller implements DataBinder {
             // Searchable reference.
             if (scpm.reference != null) {
                 Class<?> refClass = scpm.bestGuessReferenceType
-                GrailsDomainClass refDomainClass
-                for (GrailsClass dClazz : grailsApplication.getArtefacts(DomainClassArtefactHandler.TYPE)) {
-                    if (dClazz.clazz.equals(refClass)) {
-                        refDomainClass = dClazz
-                        break
-                    }
-                }
+                DomainEntity refDomainClass = elasticSearchContextHolder.getMappingContextByType(refClass)?.domainClass
                 Assert.state(refDomainClass != null, "Found reference to non-domain class: $refClass")
                 return unmarshallReference(refDomainClass, data, unmarshallingContext)
             }
@@ -203,9 +199,9 @@ class DomainClassUnmarshaller implements DataBinder {
                 // Embedded instance.
                 if (!scpm.isComponent()) {
                     // maybe ignore?
-                    throw new IllegalStateException("Property ${domainClass.name}.${propertyName} is not mapped as [component], but broken search hit found.")
+                    throw new IllegalStateException("Property ${domainClass.type.name}.${propertyName} is not mapped as [component], but broken search hit found.")
                 }
-                GrailsDomainClass nestedDomainClass = ((GrailsDomainClass) grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, (String) data.get('class')))
+                DomainEntity nestedDomainClass = elasticSearchContextHolder.getMappingContext((String) data.get('class'))?.domainClass
                 if (domainClass != null) {
                     // Unmarshall 'component' instance.
                     if (!scpm.isComponent()) {
@@ -247,7 +243,7 @@ class DomainClassUnmarshaller implements DataBinder {
                 }
 
                 parseResult = null
-            } else if (scpm.grailsProperty.type == Date && null != propertyValue) {
+            } else if (scpm.grailsProperty.type == Date && propertyValue != null) {
                 parseResult = XContentBuilder.DEFAULT_DATE_PRINTER.parseDateTime(propertyValue).toDate()
             }
         }
@@ -258,7 +254,7 @@ class DomainClassUnmarshaller implements DataBinder {
         propertyValue
     }
 
-    private unmarshallReference(GrailsDomainClass domainClass, Map<String, Object> data, DefaultUnmarshallingContext unmarshallingContext) {
+    private unmarshallReference(DomainEntity domainClass, Map<String, Object> data, DefaultUnmarshallingContext unmarshallingContext) {
         // As a simplest scenario recover object directly from ElasticSearch.
         // todo add first-level caching and cycle ref checking
         String indexName = elasticSearchContextHolder.getMappingContext(domainClass).queryingIndex
@@ -277,11 +273,11 @@ class DomainClassUnmarshaller implements DataBinder {
         unmarshallDomain(domainClass, response.id, resolvedReferenceData, unmarshallingContext)
     }
 
-    private unmarshallDomain(GrailsDomainClass domainClass, providedId, Map<String, Object> data, DefaultUnmarshallingContext unmarshallingContext) {
-        GrailsDomainClassProperty identifier = domainClass.identifier
+    private unmarshallDomain(DomainEntity domainClass, providedId, Map<String, Object> data, DefaultUnmarshallingContext unmarshallingContext) {
+        DomainProperty identifier = domainClass.identifier
         TypeConverter typeConverter = new SimpleTypeConverter()
         Object id = typeConverter.convertIfNecessary(providedId, identifier.type)
-        GroovyObject instance = (GroovyObject) domainClass.newInstance()
+        GroovyObject instance = (GroovyObject) domainClass.type.newInstance()
         instance.setProperty(identifier.name, id)
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             if (entry.key != 'class' && entry.key != 'id') {

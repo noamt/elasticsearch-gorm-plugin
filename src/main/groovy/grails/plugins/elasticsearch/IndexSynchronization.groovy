@@ -1,5 +1,7 @@
 package grails.plugins.elasticsearch
 
+import groovy.transform.CompileStatic
+
 import grails.plugins.elasticsearch.index.IndexRequestQueue
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -9,6 +11,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 /**
  * @author Noam Y. Tenne
  */
+@CompileStatic
 class IndexSynchronization extends TransactionSynchronizationAdapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(this)

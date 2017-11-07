@@ -16,37 +16,38 @@
 
 package grails.plugins.elasticsearch.mapping
 
-import grails.core.GrailsApplication
-import grails.core.GrailsDomainClass
-import grails.core.GrailsDomainClassProperty
-import grails.util.GrailsClassUtils
 import groovy.transform.CompileStatic
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
-import org.grails.core.DefaultGrailsDomainClass
-import org.grails.core.artefact.DomainClassArtefactHandler
+import java.lang.reflect.Modifier
+
+import grails.core.GrailsApplication
+
 import org.springframework.util.Assert
 
-import java.lang.reflect.Modifier
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+
 
 @CompileStatic
 class SearchableDomainClassMapper extends GroovyObjectSupport {
+
+    private Log log = LogFactory.getLog(SearchableDomainClassMapper)
+
     /**
      * Class mapping properties
      */
     private all = true
     private Boolean root = true
 
-    private Set<String> mappableProperties = []
-    private Map<String, SearchableClassPropertyMapping> customMappedProperties = new HashMap<String, SearchableClassPropertyMapping>()
-    private GrailsDomainClass grailsDomainClass
-    private GrailsApplication grailsApplication
+    private Set<String> mappableProperties = new HashSet<>()
+    private Map<String, SearchableClassPropertyMapping> customMappedProperties = new HashMap<>()
+
+    private final DomainReflectionService reflectionService
+    private final GrailsApplication grailsApplication
+    private final ConfigObject esConfig
+    private final DomainEntity domainClass
+
     private only
     private except
-
-    private ConfigObject esConfig
-
-    private Log log = LogFactory.getLog(SearchableDomainClassMapper)
 
     /**
      * Create closure-based mapping configurator.
@@ -55,10 +56,14 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
      * @param domainClass Grails domain class to be configured
      * @param esConfig ElasticSearch configuration
      */
-    SearchableDomainClassMapper(GrailsApplication grailsApplication, GrailsDomainClass domainClass, ConfigObject esConfig) {
-        this.esConfig = esConfig
-        this.grailsDomainClass = domainClass
+    SearchableDomainClassMapper(GrailsApplication grailsApplication,
+                                DomainReflectionService reflectionService,
+                                DomainEntity domainClass,
+                                ConfigObject esConfig) {
         this.grailsApplication = grailsApplication
+        this.reflectionService = reflectionService
+        this.esConfig = esConfig
+        this.domainClass = domainClass
     }
 
     void setAll(all) {
@@ -85,40 +90,38 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
      * @return searchable domain class mapping
      */
     SearchableClassMapping buildClassMapping() {
-
         String searchablePropertyName = getSearchablePropertyName()
 
-        if (!grailsDomainClass.hasProperty(searchablePropertyName)) {
-            return null
-        }
+        if (!domainClass.hasProperty(searchablePropertyName)) return null
+
         // Process inheritance.
-        List<GrailsDomainClass> superMappings = []
-        Class<?> currentClass = grailsDomainClass.getClazz()
-        superMappings.add(grailsDomainClass)
+        List<DomainEntity> superMappings = []
+        Class<?> currentClass = domainClass.type
+        superMappings.add(domainClass)
 
         while (currentClass != null) {
-            currentClass = currentClass.getSuperclass()
-            if (currentClass != null && DomainClassArtefactHandler.isDomainClass(currentClass)) {
-                GrailsDomainClass superDomainClass = ((GrailsDomainClass) grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, currentClass.getName()))
+            currentClass = currentClass.superclass
+            if (currentClass != null && reflectionService.isDomainEntity(currentClass)) {
+                DomainEntity superDomainClass = reflectionService.getDomainEntity(currentClass)
 
                 // If the super class is abstract, it needs peculiar processing
                 // The abstract class won't be actually mapped to ES, but the concrete subclasses will have to inherit
                 // the searchable mapping options.
-                if (superDomainClass == null && Modifier.isAbstract(currentClass.getModifiers())) {
+                if (superDomainClass == null && Modifier.isAbstract(currentClass.modifiers)) {
                     // We create a temporary dummy GrailsDomainClass instance for this abstract class
-                    superDomainClass = new DefaultGrailsDomainClass(currentClass)
+                    superDomainClass = reflectionService.getAbstractDomainEntity(currentClass)
                 } else {
                     // If superDomainClass is null & not abstract, then we won't process this class
                     break
                 }
 
                 if (superDomainClass.hasProperty(searchablePropertyName) &&
-                        superDomainClass.getPropertyValue(searchablePropertyName).equals(Boolean.FALSE)) {
+                        superDomainClass.getInitialPropertyValue(searchablePropertyName) == Boolean.FALSE) {
                     // hierarchy explicitly terminated. Do not browse any more properties.
                     break
                 }
                 superMappings.add(superDomainClass)
-                if (superDomainClass.isRoot()) {
+                if (superDomainClass.root) {
                     break
                 }
             }
@@ -126,29 +129,29 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
 
         Collections.reverse(superMappings)
 
-        for (GrailsDomainClassProperty prop : getDomainProperties(grailsDomainClass)) {
-            mappableProperties.add(prop.getName())
+        for (DomainProperty prop : getDomainProperties(domainClass)) {
+            mappableProperties.add(prop.name)
         }
 
         // !!!! Allow explicit identifier indexing ONLY when defined with custom attributes.
-        mappableProperties.add(grailsDomainClass.getIdentifier().getName())
+        mappableProperties.add(domainClass.identifierName)
 
-        log.debug("Identified the following properties as candidates for mapping: ${mappableProperties}")
+        log.debug("Identified the following properties as candidates for mapping: $mappableProperties")
 
         // Process inherited mappings in reverse order.
-        for (GrailsDomainClass domainClass : superMappings) {
+        for (DomainEntity domainClass : superMappings) {
             if (domainClass.hasProperty(searchablePropertyName)) {
-                Object searchable = domainClass.getPropertyValue(searchablePropertyName)
+                Object searchable = domainClass.getInitialPropertyValue(searchablePropertyName)
                 if (searchable instanceof Boolean) {
                     buildDefaultMapping(domainClass)
-                } else if (searchable instanceof java.util.LinkedHashMap) {
+                } else if (searchable instanceof LinkedHashMap) {
                     Set<String> inheritedProperties = getInheritedProperties(domainClass)
                     buildHashMapMapping((LinkedHashMap) searchable, domainClass, inheritedProperties)
                 } else if (searchable instanceof Closure) {
                     Set<String> inheritedProperties = getInheritedProperties(domainClass)
                     buildClosureMapping(domainClass, searchable as Closure, inheritedProperties)
                 } else {
-                    throw new IllegalArgumentException("'$searchablePropertyName' property has unknown type: " + searchable.getClass())
+                    throw new IllegalArgumentException("'$searchablePropertyName' property has unknown type: ${searchable.getClass()}")
                 }
             }
         }
@@ -157,45 +160,39 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
         // Clean out any per-property specs not allowed by 'only', 'except' rules.
 
         customMappedProperties.keySet().retainAll(mappableProperties)
-        mappableProperties.remove(grailsDomainClass.getIdentifier().getName())
+        mappableProperties.remove(domainClass.identifier.name)
 
         for (String propertyName : mappableProperties) {
             SearchableClassPropertyMapping scpm = customMappedProperties.get(propertyName)
             if (scpm == null) {
-                scpm = new SearchableClassPropertyMapping(grailsDomainClass.getPropertyByName(propertyName))
+                scpm = new SearchableClassPropertyMapping(domainClass.getPropertyByName(propertyName))
                 customMappedProperties.put(propertyName, scpm)
             }
         }
 
-        SearchableClassMapping scm = new SearchableClassMapping(grailsDomainClass, customMappedProperties.values())
-        scm.setRoot(root)
-        scm.setAll(all)
+        SearchableClassMapping scm = new SearchableClassMapping(grailsApplication, domainClass, customMappedProperties.values())
+        scm.root = root
+        scm.all = all
         return scm
     }
 
-    private Set<String> getInheritedProperties(GrailsDomainClass domainClass) {
-        // check which properties belong to this domain class ONLY
-        Set<String> inheritedProperties = []
-        for (GrailsDomainClassProperty prop : getDomainProperties(domainClass)) {
-            if (GrailsClassUtils.isPropertyInherited(domainClass.getClazz(), prop.getName())) {
-                inheritedProperties.add(prop.getName())
-            }
-        }
-        return inheritedProperties
+    private Set<String> getInheritedProperties(DomainEntity domainClass) {
+        getDomainProperties(domainClass).findAll { domainClass.isPropertyInherited(it) }
+                                        .collect { it.name }
+                                        .toSet()
     }
 
-    void buildDefaultMapping(GrailsDomainClass grailsDomainClass) {
+    void buildDefaultMapping(DomainEntity domainClass) {
+        List<String> defaultExcludedProperties = (List<String>) esConfig.get("defaultExcludedProperties")
 
-        for (GrailsDomainClassProperty property : getDomainProperties(grailsDomainClass)) {
-            //noinspection unchecked
-            List<String> defaultExcludedProperties = (List<String>) esConfig.get("defaultExcludedProperties")
-            if (defaultExcludedProperties == null || !defaultExcludedProperties.contains(property.getName())) {
-                customMappedProperties.put(property.getName(), new SearchableClassPropertyMapping(property))
+        for (DomainProperty property : getDomainProperties(domainClass)) {
+            if (defaultExcludedProperties == null || !defaultExcludedProperties.contains(property.name)) {
+                customMappedProperties.put(property.name, new SearchableClassPropertyMapping(property))
             }
         }
     }
 
-    void buildClosureMapping(GrailsDomainClass grailsDomainClass, Closure searchable, Set<String> inheritedProperties) {
+    void buildClosureMapping(DomainEntity domainClass, Closure searchable, Set<String> inheritedProperties) {
         assert searchable != null
 
         // Build user-defined specific mappings
@@ -203,21 +200,21 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
         closure.setDelegate(this)
         closure.call()
 
-        buildMappingFromOnlyExcept(grailsDomainClass, inheritedProperties)
+        buildMappingFromOnlyExcept(domainClass, inheritedProperties)
     }
 
-    void buildHashMapMapping(LinkedHashMap map, GrailsDomainClass domainClass, Set<String> inheritedProperties) {
+    void buildHashMapMapping(LinkedHashMap map, DomainEntity domainClass, Set<String> inheritedProperties) {
         // Support old searchable-plugin syntax ([only: ['category', 'title']] or [except: 'createdAt'])
         only = map.containsKey("only") ? map.get("only") : null
         except = map.containsKey("except") ? map.get("except") : null
         buildMappingFromOnlyExcept(domainClass, inheritedProperties)
     }
 
-    private void buildMappingFromOnlyExcept(GrailsDomainClass domainClass, Set<String> inheritedProperties) {
+    private void buildMappingFromOnlyExcept(DomainEntity domainClass, Set<String> inheritedProperties) {
         Set<String> propsOnly = convertToSet(only)
         Set<String> propsExcept = convertToSet(except)
-        if (!propsOnly.isEmpty() && !propsExcept.isEmpty()) {
-            throw new IllegalArgumentException("Both 'only' and 'except' were used in '${grailsDomainClass.getPropertyName()}#${getSearchablePropertyName()}': provide one or neither but not both")
+        if (!propsOnly.empty && !propsExcept.empty) {
+            throw new IllegalArgumentException("Both 'only' and 'except' were used in '${this.domainClass.defaultPropertyName}#${searchablePropertyName}': provide one or neither but not both")
         }
 
         Boolean alwaysInheritProperties = (Boolean) esConfig.get("alwaysInheritProperties")
@@ -225,21 +222,21 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
 
         def defaultExcludedProperties = esConfig.get("defaultExcludedProperties")
         if (defaultExcludedProperties instanceof Collection) {
-            log.debug("Removing default excluded properties ${defaultExcludedProperties} from mappable properties for class ${domainClass.clazz} : ${mappableProperties}")
+            log.debug("Removing default excluded properties ${defaultExcludedProperties} from mappable properties for class ${domainClass.type} : ${mappableProperties}")
             mappableProperties.removeAll(defaultExcludedProperties)
         }
 
         // Remove all properties that may be in the "except" rule
         if (!propsExcept.isEmpty()) {
-            log.debug("'except' found on class ${domainClass.clazz}. Removing properties from mappings : ${propsExcept}")
+            log.debug("'except' found on class ${domainClass.type}. Removing properties from mappings : ${propsExcept}")
             mappableProperties.removeAll(propsExcept)
         }
         // Only keep the properties specified in the "only" rule
         if (!propsOnly.isEmpty()) {
-            log.debug("'only' found on class ${domainClass.clazz}.")
+            log.debug("'only' found on class ${domainClass.type}.")
             // If we have inherited properties, we keep them nonetheless
             if (inherit) {
-                log.debug("'only' found on class ${domainClass.clazz}. Keeping inherited properties : ${inheritedProperties}")
+                log.debug("'only' found on class ${domainClass.type}. Keeping inherited properties : ${inheritedProperties}")
                 mappableProperties.retainAll(inheritedProperties)
             } else {
                 mappableProperties.clear()
@@ -248,7 +245,7 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
             mappableProperties.addAll(propsOnly)
         }
 
-        log.debug("Properties to map for class ${domainClass.clazz} are: ${mappableProperties}")
+        log.debug("Properties to map for class ${domainClass.type} are: ${mappableProperties}")
     }
 
     /**
@@ -260,8 +257,8 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
      */
     def invokeMethod(String name, args) {
         // Custom properties mapping options
-        GrailsDomainClassProperty property = grailsDomainClass.getPropertyByName(name)
-        Assert.notNull(property, "Unable to find property [$name] used in [$grailsDomainClass.propertyName]#${getSearchablePropertyName()}].")
+        DomainProperty property = domainClass.getPropertyByName(name)
+        Assert.notNull(property, "Unable to find property [$name] used in [$domainClass.defaultPropertyName]#${searchablePropertyName}].")
 
         // Check if we already has mapping for this property.
         SearchableClassPropertyMapping propertyMapping = customMappedProperties.get(name)
@@ -309,15 +306,15 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
         searchablePropertyName
     }
 
-    private GrailsDomainClassProperty[] getDomainProperties(GrailsDomainClass domainClass) {
-        GrailsDomainClassProperty[] properties
-        if (esConfig.includeTransients) {
-            properties = domainClass.getProperties()
-            //These properties are specific to GORM and of no use for search. For backwards compatibility they are not included
-            properties = properties - domainClass.getPropertyByName("id") - domainClass.getPropertyByName("version")
-        } else {
-            properties = domainClass.getPersistentProperties()
-        }
-        properties
+    //These properties are specific to GORM and of no use for search. For backwards compatibility they are not included
+    private static Set<String> EXCLUDED_PROPERTIES = ["id", "version"] as Set
+
+    private static Collection<DomainProperty> findNonExcludedProperties(DomainEntity domainClass) {
+        domainClass.properties.findAll { !EXCLUDED_PROPERTIES.contains(it.name) }
+    }
+
+    private Collection<DomainProperty> getDomainProperties(DomainEntity domainClass) {
+        return esConfig.includeTransients ? findNonExcludedProperties(domainClass)
+                                          : domainClass.persistentProperties
     }
 }

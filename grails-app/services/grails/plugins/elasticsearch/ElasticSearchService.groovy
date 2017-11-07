@@ -20,21 +20,15 @@ import grails.core.support.GrailsApplicationAware
 import grails.plugins.elasticsearch.index.IndexRequestQueue
 import grails.plugins.elasticsearch.mapping.SearchableClassMapping
 import grails.plugins.elasticsearch.util.GXContentBuilder
+
 import org.elasticsearch.action.search.SearchRequest
-import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.client.Client
-import org.elasticsearch.cluster.ClusterModule
-import org.elasticsearch.common.bytes.BytesArray
-import org.elasticsearch.common.bytes.BytesReference
-import org.elasticsearch.common.io.stream.InputStreamStreamInput
-import org.elasticsearch.common.io.stream.NamedWriteableAwareStreamInput
-import org.elasticsearch.common.io.stream.NamedWriteableRegistry
-import org.elasticsearch.common.io.stream.StreamInput
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.xcontent.NamedXContentRegistry
 import org.elasticsearch.common.xcontent.XContent
 import org.elasticsearch.common.xcontent.XContentParser
 import org.elasticsearch.common.xcontent.json.JsonXContent
+import org.elasticsearch.index.query.Operator
 import org.elasticsearch.index.query.QueryBuilder
 import org.elasticsearch.index.query.QueryStringQueryBuilder
 import org.elasticsearch.search.SearchHit
@@ -49,7 +43,6 @@ import org.slf4j.LoggerFactory
 import static grails.plugins.elasticsearch.util.AbstractQueryBuilderParser.parseInnerQueryBuilder
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery
 
-import org.elasticsearch.index.query.Operator
 
 class ElasticSearchService implements GrailsApplicationAware {
     static final Logger LOG = LoggerFactory.getLogger(this)
@@ -246,7 +239,7 @@ class ElasticSearchService implements GrailsApplicationAware {
      */
     private doBulkRequest(Map options, int operationType) {
         def clazz = options.class
-        def mappings = []
+        List<SearchableClassMapping> mappings = []
         if (clazz) {
             if (clazz instanceof Collection) {
                 clazz.each { c ->
@@ -257,57 +250,50 @@ class ElasticSearchService implements GrailsApplicationAware {
             }
 
         } else {
-            mappings = elasticSearchContextHolder.mapping.values()
+            mappings = elasticSearchContextHolder.mapping.values() as List
         }
-        def maxRes = elasticSearchContextHolder.config.maxBulkRequest ?: 500
+        def max = elasticSearchContextHolder.config.maxBulkRequest ?: 500
 
         mappings.each { scm ->
+            Class<?> domainClass = scm.domainClass.type
             if (scm.root) {
                 if (operationType == INDEX_REQUEST) {
-                    LOG.debug("Indexing all instances of ${scm.domainClass}")
+                    LOG.debug("Indexing all instances of $domainClass")
                 } else if (operationType == DELETE_REQUEST) {
-                    LOG.debug("Deleting all instances of ${scm.domainClass}")
+                    LOG.debug("Deleting all instances of $domainClass")
                 }
 
                 // The index is split to avoid out of memory exception
-                def count = scm.domainClass.clazz.count() ?: 0
-                LOG.debug("Found $count instances of ${scm.domainClass}")
+                def count = domainClass.count() ?: 0
+                LOG.debug("Found $count instances of $domainClass")
 
-                int nbRun = Math.ceil(count / maxRes)
+                int nbRun = Math.ceil(count / max)
 
-                LOG.debug("Maximum entries allowed in each bulk request is $maxRes, so indexing is split to $nbRun iterations")
+                LOG.debug("Maximum entries allowed in each bulk request is $max, so indexing is split to $nbRun iterations")
 
-                scm.domainClass.clazz.withNewSession { session ->
-                    for (int i = 0; i < nbRun; i++) {
-                        def resultToStartFrom = i * maxRes
+                for (int i = 0; i < nbRun; i++) {
+                    def offset = i * max
 
-                        LOG.debug("Bulk index iteration ${i+1}: fetching $maxRes results starting from ${resultToStartFrom}")
+                    LOG.debug("Bulk index iteration ${i+1}: fetching $max results starting from ${offset}")
 
-                        def results = scm.domainClass.clazz.withCriteria {
-                            firstResult(resultToStartFrom)
-                            maxResults(maxRes)
-                            order('id', 'asc')
+                    def results = domainClass.listOrderById([offset: offset, max: max, order: "asc"])
+
+                    LOG.debug("Bulk index iteration ${i+1}: found ${results.size()} results")
+                    results.each {
+                        if (operationType == INDEX_REQUEST) {
+                            indexRequestQueue.addIndexRequest(it)
+                            LOG.debug("Adding the document ${it.id} to the index request queue")
+                        } else if (operationType == DELETE_REQUEST) {
+                            indexRequestQueue.addDeleteRequest(it)
+                            LOG.debug("Adding the document ${it.id} to the delete request queue")
                         }
-
-                        LOG.debug("Bulk index iteration ${i+1}: found ${results.size()} results")
-                        results.each {
-                            if (operationType == INDEX_REQUEST) {
-                                indexRequestQueue.addIndexRequest(it)
-                                LOG.debug("Adding the document ${it.id} to the index request queue")
-                            } else if (operationType == DELETE_REQUEST) {
-                                indexRequestQueue.addDeleteRequest(it)
-                                LOG.debug("Adding the document ${it.id} to the delete request queue")
-                            }
-                        }
-                        indexRequestQueue.executeRequests()
-                        session.clear()
-
-                        log.info("Request iteration ${i+1} out of $nbRun finished")
                     }
-                }
+                    indexRequestQueue.executeRequests()
 
+                    LOG.info("Request iteration ${i+1} out of $nbRun finished")
+                }
             } else {
-                LOG.debug("${scm.domainClass.clazz} is not a root searchable class and has been ignored.")
+                LOG.debug("$domainClass is not a root searchable class and has been ignored.")
             }
         }
     }
@@ -386,24 +372,23 @@ class ElasticSearchService implements GrailsApplicationAware {
         }
 
         // Handle highlighting
-        if (params.highlight) {
+        Closure highlight = params.highlight as Closure
+        if (highlight) {
             def highlighter = new HighlightBuilder()
             // params.highlight is expected to provide a Closure.
-            def highlightBuilder = params.highlight
-            highlightBuilder.delegate = highlighter
-            highlightBuilder.resolveStrategy = Closure.DELEGATE_FIRST
-            highlightBuilder.call()
-            source.highlight highlighter
+            highlight.delegate = highlighter
+            highlight.resolveStrategy = Closure.DELEGATE_FIRST
+            highlight.call()
+            source.highlighter highlighter
         }
 
         source.explain(false)
 
         SearchRequest request = new SearchRequest()
-        SearchType searchType =
-                                (params.searchType ?:
-                                elasticSearchContextHolder.config.defaultSearchType ?:
-                                'query_then_fetch').toUpperCase()
-        request.searchType searchType
+        String searchType = params.searchType ?:
+                            elasticSearchContextHolder.config.defaultSearchType ?:
+                            'query_then_fetch'
+        request.searchType searchType.toLowerCase()
         request.source source
 
         return request
@@ -472,7 +457,7 @@ class ElasticSearchService implements GrailsApplicationAware {
             LOG.debug(response.inspect())
             def searchHits = response.getHits()
             def result = [:]
-            result.total = searchHits.totalHits()
+            result.total = searchHits.getTotalHits()
 
             LOG.debug "Search returned ${result.total ?: 0} result(s)."
 

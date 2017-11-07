@@ -16,8 +16,7 @@
 
 package grails.plugins.elasticsearch
 
-import org.elasticsearch.Version
-import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.client.Client
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.InetSocketTransportAddress
 import org.elasticsearch.mapper.attachments.MapperAttachmentsPlugin
@@ -219,10 +218,12 @@ class ClientNodeFactoryBean implements FactoryBean {
         })
     }
 
+    @Override
     Class getObjectType() {
-        return org.elasticsearch.client.Client
+        return Client
     }
 
+    @Override
     boolean isSingleton() {
         return true
     }

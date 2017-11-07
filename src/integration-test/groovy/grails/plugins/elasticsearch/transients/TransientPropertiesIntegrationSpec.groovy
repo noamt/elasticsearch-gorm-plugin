@@ -1,10 +1,10 @@
 package grails.plugins.elasticsearch.transients
 
 import grails.core.GrailsApplication
+import grails.testing.mixin.integration.Integration
 import grails.plugins.elasticsearch.ElasticSearchAdminService
 import grails.plugins.elasticsearch.ElasticSearchService
 import grails.plugins.elasticsearch.mapping.SearchableClassMappingConfigurator
-import grails.test.mixin.integration.Integration
 import grails.transaction.Rollback
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Specification
@@ -65,9 +65,7 @@ class TransientPropertiesIntegrationSpec extends Specification {
         given: "the configuration says to always include transients"
         grailsApplication.config.elasticSearch.includeTransients = true
 
-        grailsApplication.config.elasticSearch.includeTransients == true
-
-        elasticSearchAdminService.deleteIndex(Anagram, Calculation, Palette)
+        elasticSearchAdminService.deleteIndex()
         searchableClassMappingConfigurator.configureAndInstallMappings()
 
         when: "Indexing some instances"

@@ -8,9 +8,6 @@ import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static MappingMigrationStrategy.alias
-import static MappingMigrationStrategy.none
-
 /**
  * Created by @marcos-carceles on 13/01/15.
  * Created and exposed as a bean, because Bootstrap cannot be easily tested and invoked from IntegrationSpec
@@ -37,8 +34,8 @@ class ElasticSearchBootStrapHelper implements ElasticSearchConfigAware {
             elasticSearchService.index(Collections.emptyMap()) // empty map is needed for static compiling
         }
         //Update index aliases where needed
-        MappingMigrationStrategy migrationStrategy = migrationConfig?.strategy ? MappingMigrationStrategy.valueOf(migrationConfig?.strategy as String) : none
-        if (migrationStrategy == alias) {
+        MappingMigrationStrategy migrationStrategy = migrationConfig?.strategy ? MappingMigrationStrategy.valueOf(migrationConfig?.strategy as String) : MappingMigrationStrategy.none
+        if (migrationStrategy == MappingMigrationStrategy.alias) {
             elasticSearchContextHolder.indexesRebuiltOnMigration.each { String indexName ->
                 int latestVersion = elasticSearchAdminService.getLatestVersion(indexName)
                 if(!migrationConfig?.disableAliasChange) {
@@ -48,4 +45,5 @@ class ElasticSearchBootStrapHelper implements ElasticSearchConfigAware {
             }
         }
     }
+
 }

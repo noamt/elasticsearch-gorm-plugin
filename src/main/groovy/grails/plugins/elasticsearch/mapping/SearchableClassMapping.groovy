@@ -19,41 +19,41 @@ package grails.plugins.elasticsearch.mapping
 import grails.core.GrailsApplication
 import grails.plugins.elasticsearch.util.ElasticSearchConfigAware
 import grails.plugins.elasticsearch.util.IndexNamingUtils
-import grails.util.GrailsNameUtils
-import grails.core.GrailsDomainClass
 import grails.plugins.elasticsearch.ElasticSearchContextHolder
 import groovy.transform.CompileStatic
 
 @CompileStatic
 class SearchableClassMapping implements ElasticSearchConfigAware {
 
+    private final GrailsApplication grailsApplication
+
     /** All searchable properties */
     private Collection<SearchableClassPropertyMapping> propertiesMapping
+
     /** Owning domain class */
-    private GrailsDomainClass domainClass
+    private DomainEntity domainClass
+
     /** Searchable root? */
     private boolean root = true
-    protected all = true
 
+    protected all = true
     String indexName
 
-    SearchableClassMapping(GrailsDomainClass domainClass, Collection<SearchableClassPropertyMapping> propertiesMapping) {
+    SearchableClassMapping(GrailsApplication grailsApplication,
+                           DomainEntity domainClass,
+                           Collection<SearchableClassPropertyMapping> propertiesMapping) {
+        this.grailsApplication = grailsApplication
         this.domainClass = domainClass
         this.propertiesMapping = propertiesMapping
         this.indexName = calculateIndexName()
     }
 
     SearchableClassPropertyMapping getPropertyMapping(String propertyName) {
-        for (SearchableClassPropertyMapping scpm : propertiesMapping) {
-            if (scpm.getPropertyName().equals(propertyName)) {
-                return scpm
-            }
-        }
-        return null
+        propertiesMapping.find { it.propertyName == propertyName }
     }
 
     Boolean isRoot() {
-        return root
+        root
     }
 
     void setRoot(Boolean root) {
@@ -66,11 +66,11 @@ class SearchableClassMapping implements ElasticSearchConfigAware {
     }
 
     Collection<SearchableClassPropertyMapping> getPropertiesMapping() {
-        return propertiesMapping
+        propertiesMapping
     }
 
-    GrailsDomainClass getDomainClass() {
-        return domainClass
+    DomainEntity getDomainClass() {
+        domainClass
     }
 
     /**
@@ -85,11 +85,13 @@ class SearchableClassMapping implements ElasticSearchConfigAware {
 
     String calculateIndexName() {
         String name = (esConfig?.get('index') as ConfigObject)?.name ?: domainClass.packageName
+
         if (name == null || name.length() == 0) {
-            // index name must be lowercase (org.elasticsearch.indices.InvalidIndexNameException)
-            name = domainClass.getPropertyName()
+            name = domainClass.defaultPropertyName
         }
-        return name.toLowerCase()
+
+        // index name must be lowercase (org.elasticsearch.indices.InvalidIndexNameException)
+        name.toLowerCase()
     }
 
     String getIndexingIndex() {
@@ -104,7 +106,7 @@ class SearchableClassMapping implements ElasticSearchConfigAware {
      * @return type name for ES mapping.
      */
     String getElasticTypeName() {
-        GrailsNameUtils.getPropertyName(domainClass.clazz)
+        domainClass.propertyNameRepresentation
     }
 
     boolean isAll() {
@@ -113,16 +115,17 @@ class SearchableClassMapping implements ElasticSearchConfigAware {
         } else if (all instanceof Map) {
             return (all as Map).enabled instanceof Boolean ? (all as Map).enabled : true
         }
-        return true
+        true
     }
 
     @Override
-    public String toString() {
+    String toString() {
         return "${getClass().name}(domainClass:$domainClass, propertiesMapping:$propertiesMapping, indexName:$indexName, isAll:${isAll()})"
     }
 
     @Override
     GrailsApplication getGrailsApplication() {
-        return domainClass.application
+        grailsApplication
     }
+
 }

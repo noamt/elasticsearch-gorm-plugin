@@ -1,8 +1,11 @@
 package grails.plugins.elasticsearch
 
+import groovy.transform.CompileStatic
+
 /**
  * @author Noam Y. Tenne
  */
+@CompileStatic
 class EntityKey {
 
     private String entityName
@@ -13,11 +16,11 @@ class EntityKey {
         this.id = id
     }
 
-    boolean equals(o) {
+    boolean equals(Object o) {
         if (is(o)) return true
         if (getClass() != o.getClass()) return false
 
-        EntityKey entityKey = o
+        EntityKey entityKey = (EntityKey) o
 
         if (entityName != entityKey.entityName) return false
         if (id != entityKey.id) return false
@@ -31,4 +34,5 @@ class EntityKey {
         result = 31 * result + (id != null ? id.hashCode() : 0)
         return result
     }
+
 }

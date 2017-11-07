@@ -1,41 +1,35 @@
 package grails.plugins.elasticsearch
 
-import grails.test.mixin.integration.Integration
-import grails.transaction.Rollback
+import grails.gorm.transactions.Rollback
+import grails.testing.mixin.integration.Integration
 import org.elasticsearch.index.query.QueryBuilder
 import org.elasticsearch.index.query.QueryBuilders
-import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Specification
 import test.Photo
 
+
 @Integration
 @Rollback
-class DynamicMethodsIntegrationSpec extends Specification {
+class DynamicMethodsIntegrationSpec extends Specification implements ElasticSearchSpec {
 
-    @Autowired
-    ElasticSearchAdminService elasticSearchAdminService
-    @Autowired
-    ElasticSearchService elasticSearchService
-
-    void setup() {
-        new Photo(name: "Captain Kirk", url: "http://www.nicenicejpg.com/100").save(failOnError: true)
-        new Photo(name: "Captain Picard", url: "http://www.nicenicejpg.com/200").save(failOnError: true)
-        new Photo(name: "Captain Sisko", url: "http://www.nicenicejpg.com/300").save(failOnError: true)
-        new Photo(name: "Captain Janeway", url: "http://www.nicenicejpg.com/400").save(failOnError: true)
-        new Photo(name: "Captain Archer", url: "http://www.nicenicejpg.com/500").save(failOnError: true)
+    def setup() {
+        save new Photo(name: "Captain Kirk", url: "http://www.nicenicejpg.com/100")
+        save new Photo(name: "Captain Picard", url: "http://www.nicenicejpg.com/200")
+        save new Photo(name: "Captain Sisko", url: "http://www.nicenicejpg.com/300")
+        save new Photo(name: "Captain Janeway", url: "http://www.nicenicejpg.com/400")
+        save new Photo(name: "Captain Archer", url: "http://www.nicenicejpg.com/500")
     }
 
-    void cleanup() {
-        Photo.all.each { Photo captain ->
-            captain.delete()
-        }
+    def cleanup() {
+        Photo.list().each { it.delete() }
     }
 
     void "can search using Dynamic Methods"() {
         given:
-        elasticSearchAdminService.refresh()
+        refreshIndices()
+
         expect:
-        elasticSearchService.search('captain', [indices: Photo, types: Photo]).total == 5
+        search(Photo, 'Captain').total == 5
 
         when:
         def results = Photo.search {
@@ -49,9 +43,10 @@ class DynamicMethodsIntegrationSpec extends Specification {
 
     void "can search and filter using Dynamic Methods"() {
         given:
-        elasticSearchAdminService.refresh()
+        refreshIndices()
+
         expect:
-        elasticSearchService.search('Captain', [indices: Photo, types: Photo]).total == 5
+        search(Photo, 'Captain').total == 5
 
         when:
         def results = Photo.search({
@@ -67,9 +62,10 @@ class DynamicMethodsIntegrationSpec extends Specification {
 
     void "can search using a QueryBuilder and Dynamic Methods"() {
         given:
-        elasticSearchAdminService.refresh()
+        refreshIndices()
+
         expect:
-        elasticSearchService.search('captain', [indices: Photo, types: Photo]).total == 5
+        search(Photo, 'Captain').total == 5
 
         when:
         QueryBuilder query = QueryBuilders.termQuery("url", "http://www.nicenicejpg.com/100")
@@ -82,9 +78,10 @@ class DynamicMethodsIntegrationSpec extends Specification {
 
     void "can search using a QueryBuilder, a filter and Dynamic Methods"() {
         given:
-        elasticSearchAdminService.refresh()
+        refreshIndices()
+
         expect:
-        elasticSearchService.search('captain', [indices: Photo, types: Photo]).total == 5
+        search(Photo, 'Captain').total == 5
 
         when:
         QueryBuilder query = QueryBuilders.matchQuery("name", "Captain")
@@ -100,9 +97,10 @@ class DynamicMethodsIntegrationSpec extends Specification {
 
     void "can search using a QueryBuilder, a FilterBuilder and Dynamic Methods"() {
         given:
-        elasticSearchAdminService.refresh()
+        refreshIndices()
+
         expect:
-        elasticSearchService.search('captain', [indices: Photo, types: Photo]).total == 5
+        search(Photo, 'Captain').total == 5
 
         when:
         QueryBuilder query = QueryBuilders.matchAllQuery()
@@ -116,9 +114,10 @@ class DynamicMethodsIntegrationSpec extends Specification {
 
     void "can search and filter using Dynamic Methods and a QueryBuilder"() {
         given:
-        elasticSearchAdminService.refresh()
+        refreshIndices()
+
         expect:
-        elasticSearchService.search('Captain', [indices: Photo, types: Photo]).total == 5
+        search(Photo, 'Captain').total == 5
 
         when:
         QueryBuilder filter = QueryBuilders.termQuery("url", "http://www.nicenicejpg.com/100")

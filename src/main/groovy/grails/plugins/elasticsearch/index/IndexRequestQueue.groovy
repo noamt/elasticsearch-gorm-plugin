@@ -21,6 +21,7 @@ import grails.plugins.elasticsearch.exception.IndexException
 import grails.plugins.elasticsearch.mapping.SearchableClassMapping
 import org.codehaus.groovy.runtime.InvokerHelper
 import org.elasticsearch.action.ActionListener
+import org.elasticsearch.action.bulk.BulkItemResponse
 import org.elasticsearch.action.bulk.BulkRequestBuilder
 import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.client.Client
@@ -259,7 +260,7 @@ class IndexRequestQueue {
         }
 
         void onResponse(BulkResponse bulkResponse) {
-            bulkResponse.getItems().each {
+            bulkResponse.getItems().each { BulkItemResponse it ->
                 boolean removeFromQueue = !it.failed || it.failureMessage.contains('UnavailableShardsException')
                 // On shard failure, do not re-push.
                 if (removeFromQueue) {

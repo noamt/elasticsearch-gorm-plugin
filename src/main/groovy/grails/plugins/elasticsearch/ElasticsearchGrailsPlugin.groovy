@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
+package grails.plugins.elasticsearch
+
 import grails.plugins.Plugin
-import grails.plugins.elasticsearch.*
 import grails.plugins.elasticsearch.conversion.CustomEditorRegistrar
 import grails.plugins.elasticsearch.conversion.JSONDomainFactory
 import grails.plugins.elasticsearch.conversion.unmarshall.DomainClassUnmarshaller
 import grails.plugins.elasticsearch.index.IndexRequestQueue
+import grails.plugins.elasticsearch.mapping.DomainReflectionService
 import grails.plugins.elasticsearch.mapping.MappingMigrationManager
 import grails.plugins.elasticsearch.mapping.SearchableClassMappingConfigurator
 import grails.plugins.elasticsearch.unwrap.DomainClassUnWrapperChain
 import grails.plugins.elasticsearch.unwrap.HibernateProxyUnWrapper
 import grails.plugins.elasticsearch.util.DomainDynamicMethodsUtils
+
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -38,7 +41,7 @@ class ElasticsearchGrailsPlugin extends Plugin {
 
     def pluginExcludes = [
             "grails-app/views/error.gsp",
-            "**/test/**",
+                          "**/test/**",
             "src/docs/**"
     ]
 
@@ -48,8 +51,8 @@ class ElasticsearchGrailsPlugin extends Plugin {
 
     def developers = [
             [name: 'Noam Y. Tenne', email: 'noam@10ne.org'],
-            [name: 'Marcos Carceles', email: 'marcos.carceles@gmail.com'],
-            [name: 'Puneet Behl', email: 'puneet.behl007@gmail.com'],
+                      [name: 'Marcos Carceles', email: 'marcos.carceles@gmail.com'],
+                      [name: 'Puneet Behl', email: 'puneet.behl007@gmail.com'],
             [name: 'James Kleeh', email: '	james.kleeh@gmail.com']
     ]
 
@@ -68,6 +71,12 @@ class ElasticsearchGrailsPlugin extends Plugin {
     Closure doWithSpring() {
         { ->
             ConfigObject esConfig = config.elasticSearch
+
+            domainReflectionService(DomainReflectionService) { bean ->
+                mappingContext = ref('grailsDomainClassMappingContext')
+
+                grailsApplication = grailsApplication
+            }
 
             elasticSearchContextHolder(ElasticSearchContextHolder) {
                 config = esConfig
@@ -94,8 +103,7 @@ class ElasticsearchGrailsPlugin extends Plugin {
                 grailsApplication = grailsApplication
                 es = ref('elasticSearchAdminService')
                 mmm = ref('mappingMigrationManager')
-
-                bean.initMethod = 'configureAndInstallMappings'
+                domainReflectionService = ref('domainReflectionService')
             }
             domainInstancesRebuilder(DomainClassUnmarshaller) {
                 elasticSearchContextHolder = ref('elasticSearchContextHolder')
@@ -116,6 +124,7 @@ class ElasticsearchGrailsPlugin extends Plugin {
                 elasticSearchContextHolder = ref('elasticSearchContextHolder')
                 grailsApplication = grailsApplication
                 domainClassUnWrapperChain = ref('domainClassUnWrapperChain')
+                domainReflectionService = ref('domainReflectionService')
             }
 
             elasticSearchBootStrapHelper(ElasticSearchBootStrapHelper) {
@@ -137,10 +146,14 @@ class ElasticsearchGrailsPlugin extends Plugin {
         }
     }
 
-    void doWithDynamicMethods() {
-        // Define the custom ElasticSearch mapping for searchable domain classes
-        if (grailsApplication.config.elasticSearch.disableDynamicMethodsInjection == false) {
+    @Override
+    void doWithApplicationContext() {
+        def configurator = applicationContext.getBean(SearchableClassMappingConfigurator)
+        configurator.configureAndInstallMappings()
+
+        if (!grailsApplication.config.getProperty("elasticSearch.disableDynamicMethodsInjection", Boolean, false)) {
             DomainDynamicMethodsUtils.injectDynamicMethods(grailsApplication, applicationContext)
         }
     }
+
 }
