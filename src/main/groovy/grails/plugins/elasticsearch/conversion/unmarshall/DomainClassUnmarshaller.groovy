@@ -18,9 +18,6 @@ package grails.plugins.elasticsearch.conversion.unmarshall
 
 import grails.converters.JSON
 import grails.core.GrailsApplication
-import grails.core.GrailsClass
-import grails.core.GrailsDomainClass
-import grails.core.GrailsDomainClassProperty
 import grails.plugins.elasticsearch.ElasticSearchContextHolder
 import grails.plugins.elasticsearch.exception.MappingException
 import grails.plugins.elasticsearch.mapping.DomainEntity
@@ -35,7 +32,6 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.SearchHits
-import org.grails.core.artefact.DomainClassArtefactHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.SimpleTypeConverter
