@@ -60,6 +60,11 @@ class SearchableClassMapping implements ElasticSearchConfigAware {
         this.root = root != null && root
     }
 
+    void setIndexName(String indexName) {
+        if(indexName != null)
+            this.indexName = indexName
+    }
+
     void setAll(all) {
         if (all != null)
             this.all = all

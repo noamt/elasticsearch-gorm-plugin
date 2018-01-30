@@ -43,7 +43,7 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
     private GrailsApplication grailsApplication
     private only
     private except
-
+    private String indexName
     private ConfigObject esConfig
 
     private Log log = LogFactory.getLog(SearchableDomainClassMapper)
@@ -79,6 +79,14 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
 
     void root(Boolean rootFlag) {
         this.root = rootFlag
+    }
+
+    void setIndexName(String name) {
+        this.indexName = name
+    }
+
+    void indexName(String name) {
+        this.indexName = name
     }
 
     /**
@@ -170,6 +178,9 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
         SearchableClassMapping scm = new SearchableClassMapping(grailsDomainClass, customMappedProperties.values())
         scm.setRoot(root)
         scm.setAll(all)
+        println("indexName: ${indexName}")
+        if(indexName)
+            scm.setIndexName(indexName)
         return scm
     }
 
@@ -210,6 +221,7 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
         // Support old searchable-plugin syntax ([only: ['category', 'title']] or [except: 'createdAt'])
         only = map.containsKey("only") ? map.get("only") : null
         except = map.containsKey("except") ? map.get("except") : null
+        indexName = map.containsKey("indexName") ? map.get("indexName") : null
         buildMappingFromOnlyExcept(domainClass, inheritedProperties)
     }
 
