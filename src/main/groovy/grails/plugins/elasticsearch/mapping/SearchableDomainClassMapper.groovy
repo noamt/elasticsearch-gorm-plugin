@@ -81,12 +81,8 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
         this.root = rootFlag
     }
 
-    void setIndexName(String name) {
-        this.indexName = name
-    }
-
-    void indexName(String name) {
-        this.indexName = name
+    void setIndexName(String indexName) {
+        this.indexName = indexName
     }
 
     /**
@@ -175,7 +171,11 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
             }
         }
 
-        SearchableClassMapping scm = new SearchableClassMapping(grailsDomainClass, customMappedProperties.values())
+        SearchableClassMapping scm
+        if(indexName)
+            scm = new SearchableClassMapping(grailsDomainClass, customMappedProperties.values(), indexName)
+        else
+            scm = new SearchableClassMapping(grailsDomainClass, customMappedProperties.values())
         scm.setRoot(root)
         scm.setAll(all)
         println("indexName: ${indexName}")

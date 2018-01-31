@@ -43,6 +43,12 @@ class SearchableClassMapping implements ElasticSearchConfigAware {
         this.indexName = calculateIndexName()
     }
 
+    SearchableClassMapping(GrailsDomainClass domainClass, Collection<SearchableClassPropertyMapping> propertiesMapping, String indexName) {
+        this.domainClass = domainClass
+        this.propertiesMapping = propertiesMapping
+        this.indexName = indexName
+    }
+
     SearchableClassPropertyMapping getPropertyMapping(String propertyName) {
         for (SearchableClassPropertyMapping scpm : propertiesMapping) {
             if (scpm.getPropertyName().equals(propertyName)) {
