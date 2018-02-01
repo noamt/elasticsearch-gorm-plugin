@@ -178,7 +178,7 @@ class SearchableDomainClassMapper extends GroovyObjectSupport {
             scm = new SearchableClassMapping(grailsDomainClass, customMappedProperties.values())
         scm.setRoot(root)
         scm.setAll(all)
-        println("indexName: ${indexName}")
+        //println("indexName: ${indexName}")
         if(indexName)
             scm.setIndexName(indexName)
         return scm
