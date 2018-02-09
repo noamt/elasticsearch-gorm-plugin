@@ -64,11 +64,11 @@ publishing {
 					resolveStrategy = Closure.DELEGATE_FIRST
 					name 'elasticsearch-grails-compile-static'
 					description 'Elasticsearch Compiler Classes for CompileStatic.'
-					url 'https://github.com/bertramdev/elasticsearch-grails-compile-static'
+					url 'https://github.com/noamt/elasticsearch-grails-plugin'
 					scm {
-						url 'https://github.com/bertramdev/elasticsearch-grails-compile-static'
-						connection 'scm:https://bertramdev@github.com/bertramdev/elasticsearch-grails-compile-static.git'
-						developerConnection 'scm:git://github.com/bertramdev/elasticsearch-grails-compile-static.git'
+						url 'https://github.com/noamt/elasticsearch-grails-plugin'
+						connection 'scm:https://moamt@github.com/noamt/elasticsearch-grails-plugin.git'
+						developerConnection 'scm:git://github.com/noamt/elasticsearch-grails-plugin.git'
 					}
 					licenses {
 						license {
@@ -112,8 +112,8 @@ bintray {
     publish=true
 	publications = ['maven']
 	pkg {
-		repo = 'elasticsearch-grails-compile-static'
-		userOrg = 'bertramlabs'
+		repo = 'grails-plugins'
+		
 		name = 'elasticsearch-grails-compile-static'
 		licenses = ['Apache-2.0']
         version {
