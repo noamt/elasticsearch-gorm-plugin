@@ -1,1 +1,1 @@
-rootProject.name = 'elasticsearch'
+include 'elasticsearch', 'elasticsearch-grails-compile-static'
