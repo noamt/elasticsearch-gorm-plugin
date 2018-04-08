@@ -5,6 +5,7 @@
 * December 12, 2017
 ** 2.4.0.RC1
 *** Support Grails 3.3.x
+*** The mapper-attachments plugin has been changed to `provided`.
 
 * August 17, 2017
 ** 1.4.1

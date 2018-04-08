@@ -3,9 +3,9 @@ introduction:
   features: Features
   history: History
 configuration: Configuration
+quickStart: The Quick Start Guide
 mapping:
   title: Mapping
-  quickStart: QuickStart
   classMapping: Class Mapping
   propertiesMapping:
     title: Properties mapping
