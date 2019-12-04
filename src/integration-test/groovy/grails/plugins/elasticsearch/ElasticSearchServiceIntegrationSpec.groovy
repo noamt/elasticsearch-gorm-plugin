@@ -4,6 +4,12 @@ import grails.converters.JSON
 import grails.gorm.transactions.Rollback
 import grails.gorm.transactions.Transactional
 import grails.testing.mixin.integration.Integration
+import grails.core.GrailsApplication
+import grails.core.GrailsDomainClass
+import grails.transaction.NotTransactional
+import grails.transaction.Rollback
+import grails.util.GrailsNameUtils
+import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder
 import org.elasticsearch.action.get.GetRequest
 import org.elasticsearch.action.search.SearchRequest
 import org.elasticsearch.action.search.SearchType
@@ -18,6 +24,8 @@ import org.elasticsearch.search.sort.SortBuilders
 import org.elasticsearch.search.sort.SortOrder
 import org.grails.web.json.JSONObject
 import org.hibernate.proxy.HibernateProxy
+import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Issue
 import spock.lang.Specification
 import spock.lang.Unroll
 import test.*
@@ -691,6 +699,38 @@ class ElasticSearchServiceIntegrationSpec extends Specification implements Elast
         then:
         search.total == 2
         search.aggregations.'max_price'.max == 5.99f
+    }
+
+    @NotTransactional
+    @Issue("https://github.com/puneetbehl/elasticsearch-grails-plugin/issues/30")
+    def "parent is still found when child is removed"() {
+        given: "a parent with a component child"
+        Parent parent
+        Parent.withNewTransaction {
+            parent = new Parent(name: 'foo')
+            parent.addToChildren(new Child())
+            parent.save(failOnError: true)
+        }
+        elasticSearchAdminService.refresh()
+
+        expect: "parent is found"
+        elasticSearchService.search('foo', [indices: Parent, types: Parent]).total == 1
+
+        when: "child is removed from parent"
+        Parent.withNewTransaction {
+            parent.children*.delete()
+            parent.children.clear()
+            parent.save(failOnError: true)
+        }
+        elasticSearchAdminService.refresh()
+
+        then: "parent is still found"
+        elasticSearchService.search('foo', [indices: Parent, types: Parent]).total == 1
+
+        cleanup:
+        Parent.withNewTransaction {
+            parent.delete()
+        }
     }
 
     private def findFailures() {
